@@ -1,0 +1,19 @@
+---
+deployment:
+  tasks:
+    # Estas tareas se ejecutan cuando cPanel hace "Update from Remote"
+    # Solo corren si el hosting tiene shell access habilitado.
+    # Sin SSH, cPanel solo hará el git pull y los archivos quedan donde estén.
+    #
+    # Variables convenientes:
+    #   $DEPLOYPATH = ruta del repositorio en el servidor (donde clonó cPanel)
+    #
+    # Cuando habiliten SSH, descomentar:
+    # - /bin/cp -R . $DEPLOYPATH
+    # - export PHP_BIN=$(which php)
+    # - $PHP_BIN $DEPLOYPATH/artisan config:cache
+    # - $PHP_BIN $DEPLOYPATH/artisan route:cache
+    # - $PHP_BIN $DEPLOYPATH/artisan view:cache
+    # - $PHP_BIN $DEPLOYPATH/artisan migrate --force
+    - /bin/echo "Despliegue de Shadow Almacén"
+    - /bin/echo "Si ves esto, shell access funciona — habilitar las tareas comentadas arriba"
