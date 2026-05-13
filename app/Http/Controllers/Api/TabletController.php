@@ -39,6 +39,8 @@ class TabletController extends Controller
             ->orderBy('ral')
             ->get();
 
+        // Incluimos TODOS los lotes (incluso con stock 0) porque la tablet
+        // necesita poder hacer retornos sobre lotes que se vaciaron.
         $lotes = DB::table('lotes')
             ->join('productos', 'productos.id', '=', 'lotes.producto_id')
             ->leftJoin('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
@@ -55,10 +57,6 @@ class TabletController extends Controller
                 'productos.nombre_interno',
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_actual_kg')
             )
-            ->where(function ($q) {
-                $q->where('v_stock_lote.stock_kg', '>', 0)
-                  ->orWhereNull('v_stock_lote.stock_kg');
-            })
             ->orderBy('lotes.fecha_recepcion')
             ->get();
 
