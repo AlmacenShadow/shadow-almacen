@@ -22,6 +22,12 @@
              class="{{ request()->routeIs('lotes.create') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
             Nueva recepción
           </a>
+          @if (auth()->user()->esAdmin())
+            <a href="{{ route('usuarios.index') }}"
+               class="{{ request()->routeIs('usuarios.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
+              Usuarios
+            </a>
+          @endif
         </div>
       </div>
       <div class="flex items-center gap-4 text-sm">
