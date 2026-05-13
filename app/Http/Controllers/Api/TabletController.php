@@ -11,13 +11,65 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Las tres puertas que la tablet del almacén usa para hablar con el sistema.
+ * Las puertas que la tablet del almacén usa para hablar con el sistema.
  *
  * No hay sesión ni cookies: la tablet manda el código del pintor en cada llamada.
  * Cuando despleguemos a internet añadiremos un API key en la cabecera.
  */
 class TabletController extends Controller
 {
+    /**
+     * GET /api/snapshot
+     * Devuelve la "foto" completa de lo que la tablet necesita conocer para operar
+     * sin internet: usuarios activos, productos activos y lotes con stock.
+     *
+     * La tablet la consulta al arrancar y después de cada sincronización
+     * exitosa. Con esto puede identificar pintores y lotes incluso offline.
+     */
+    public function snapshot(): JsonResponse
+    {
+        $usuarios = Usuario::where('activo', true)
+            ->select('id', 'codigo_barcode', 'nombre', 'rol')
+            ->orderBy('codigo_barcode')
+            ->get();
+
+        $productos = DB::table('productos')
+            ->where('activo', true)
+            ->select('id', 'ral', 'textura', 'brillo_pct', 'nombre_interno')
+            ->orderBy('ral')
+            ->get();
+
+        $lotes = DB::table('lotes')
+            ->join('productos', 'productos.id', '=', 'lotes.producto_id')
+            ->leftJoin('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
+            ->select(
+                'lotes.id',
+                'lotes.codigo_barcode',
+                'lotes.producto_id',
+                'lotes.fecha_recepcion',
+                'lotes.fecha_vencimiento',
+                'lotes.peso_tara_unitario_kg',
+                'productos.ral',
+                'productos.textura',
+                'productos.brillo_pct',
+                'productos.nombre_interno',
+                DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_actual_kg')
+            )
+            ->where(function ($q) {
+                $q->where('v_stock_lote.stock_kg', '>', 0)
+                  ->orWhereNull('v_stock_lote.stock_kg');
+            })
+            ->orderBy('lotes.fecha_recepcion')
+            ->get();
+
+        return response()->json([
+            'timestamp' => now()->toIso8601String(),
+            'usuarios'  => $usuarios,
+            'productos' => $productos,
+            'lotes'     => $lotes,
+        ]);
+    }
+
     /**
      * GET /api/usuarios/{codigo}
      * La tablet escanea el papel del pintor del tablero. Esto le dice quién es.
