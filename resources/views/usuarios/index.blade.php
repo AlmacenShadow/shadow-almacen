@@ -7,10 +7,16 @@
       <h2 class="text-2xl font-bold text-slate-900">Usuarios</h2>
       <p class="text-sm text-slate-500">Pintores (solo barcode), encargados y admin (barcode + email/contraseña)</p>
     </div>
-    <a href="{{ route('usuarios.create') }}"
-       class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg shadow">
-      + Nuevo usuario
-    </a>
+    <div class="flex gap-3">
+      <a href="{{ route('usuarios.tablero') }}" target="_blank"
+         class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2 rounded-lg shadow">
+        🖨 Imprimir tablero
+      </a>
+      <a href="{{ route('usuarios.create') }}"
+         class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg shadow">
+        + Nuevo usuario
+      </a>
+    </div>
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

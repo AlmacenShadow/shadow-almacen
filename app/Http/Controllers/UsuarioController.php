@@ -96,6 +96,17 @@ class UsuarioController extends Controller
         return view('usuarios.edit', compact('usuario'));
     }
 
+    /** Hoja imprimible con los códigos de barcode de todos los usuarios activos. */
+    public function tablero(): View
+    {
+        $this->autorizar();
+
+        $pintores  = Usuario::where('rol', 'pintor')->where('activo', true)->orderBy('codigo_barcode')->get();
+        $personal  = Usuario::whereIn('rol', ['encargado', 'admin'])->where('activo', true)->orderBy('codigo_barcode')->get();
+
+        return view('usuarios.tablero', compact('pintores', 'personal'));
+    }
+
     public function update(Request $request, Usuario $usuario): RedirectResponse
     {
         $this->autorizar();
