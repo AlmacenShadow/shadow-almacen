@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LoteController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\RalCatalogoController;
+use App\Http\Controllers\TexturaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +35,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/productos',                [ProductoController::class, 'store'])->name('productos.store');
     Route::get('/productos/{producto}/editar', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::patch('/productos/{producto}',    [ProductoController::class, 'update'])->name('productos.update');
+    Route::delete('/productos/{producto}',   [ProductoController::class, 'destroy'])->name('productos.destroy');
+
+    Route::get('/texturas',                  [TexturaController::class, 'index'])->name('texturas.index');
+    Route::post('/texturas',                 [TexturaController::class, 'store'])->name('texturas.store');
+    Route::patch('/texturas/{textura}',      [TexturaController::class, 'update'])->name('texturas.update');
+    Route::delete('/texturas/{textura}',     [TexturaController::class, 'destroy'])->name('texturas.destroy');
+
+    Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');
 
     Route::get('/usuarios',                [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::get('/usuarios/tablero',        [UsuarioController::class, 'tablero'])->name('usuarios.tablero');

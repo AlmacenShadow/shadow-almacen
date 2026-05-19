@@ -17,6 +17,8 @@ class LoteController extends Controller
     {
         $lotes = DB::table('lotes')
             ->join('productos', 'productos.id', '=', 'lotes.producto_id')
+            ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
+            ->leftJoin('ral_catalogo', 'ral_catalogo.codigo', '=', 'productos.ral')
             ->leftJoin('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
             ->select(
                 'lotes.id',
@@ -27,14 +29,20 @@ class LoteController extends Controller
                 'lotes.cantidad_cajas',
                 'lotes.proveedor',
                 'productos.ral',
-                'productos.textura',
+                DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
                 'productos.nombre_interno',
+                'productos.hex_override',
+                'ral_catalogo.hex as ral_hex',
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_kg'),
             )
             ->orderByDesc('lotes.fecha_recepcion')
             ->orderByDesc('lotes.id')
-            ->get();
+            ->get()
+            ->map(function ($l) {
+                $l->hex_resuelto = $l->hex_override ?: ($l->ral_hex ?: \App\Models\Producto::HEX_FALLBACK);
+                return $l;
+            });
 
         return view('lotes.index', compact('lotes'));
     }
@@ -84,7 +92,7 @@ class LoteController extends Controller
     /** Detalle del lote + previsualización de etiqueta para imprimir. */
     public function show(Lote $lote): View
     {
-        $lote->load('producto', 'recepcionadoPor');
+        $lote->load('producto.textura', 'producto.ralCatalogo', 'recepcionadoPor');
         return view('lotes.show', compact('lote'));
     }
 }

@@ -3,12 +3,20 @@
 
 @section('content')
   <div class="flex items-center justify-between mb-5">
-    <div>
-      <h2 class="text-2xl font-bold text-slate-900">{{ $lote->codigo_barcode }}</h2>
-      <p class="text-sm text-slate-500">
-        {{ $lote->producto->descripcion_corta }}
-        @if ($lote->producto->nombre_interno) — {{ $lote->producto->nombre_interno }} @endif
-      </p>
+    <div class="flex items-center gap-4">
+      <span class="block w-12 h-12 rounded border border-slate-300 shadow-sm flex-shrink-0"
+            style="background-color: {{ $lote->producto->hex }}"
+            title="{{ $lote->producto->hex }}"></span>
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">{{ $lote->codigo_barcode }}</h2>
+        <p class="text-sm text-slate-500">
+          {{ $lote->producto->descripcion_corta }}
+          @if ($lote->producto->nombre_interno) — {{ $lote->producto->nombre_interno }} @endif
+          @if ($lote->producto->nombre_ral_oficial)
+            <span class="text-slate-400">· {{ $lote->producto->nombre_ral_oficial }}</span>
+          @endif
+        </p>
+      </div>
     </div>
     <a href="{{ route('lotes.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← volver</a>
   </div>
@@ -62,7 +70,7 @@
             <div class="text-[10px] text-slate-400">50×30mm</div>
           </div>
           <p class="font-bold text-slate-900 mt-1 leading-tight">{{ $lote->producto->ral }}</p>
-          <p class="text-xs text-slate-700">{{ $lote->producto->textura }} · {{ $lote->producto->brillo_pct }}%</p>
+          <p class="text-xs text-slate-700">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</p>
           <p class="text-xs text-slate-600 mt-2">Recep. {{ $lote->fecha_recepcion->format('Y-m-d') }}</p>
           @if ($lote->fecha_vencimiento)
             <p class="text-xs text-slate-600">Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</p>

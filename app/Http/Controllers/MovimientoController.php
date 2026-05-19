@@ -22,6 +22,7 @@ class MovimientoController extends Controller
         $q = DB::table('movimientos as m')
             ->join('lotes', 'lotes.id', '=', 'm.lote_id')
             ->join('productos', 'productos.id', '=', 'lotes.producto_id')
+            ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
             ->leftJoin('usuarios', 'usuarios.id', '=', 'm.usuario_id')
             ->leftJoin('motivos_ajuste as ma', 'ma.id', '=', 'm.motivo_ajuste_id')
             ->select(
@@ -38,7 +39,7 @@ class MovimientoController extends Controller
                 'lotes.codigo_barcode as lote_codigo',
                 'lotes.id as lote_id',
                 'productos.ral',
-                'productos.textura',
+                DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
                 'productos.nombre_interno',
                 'ma.descripcion as motivo_descripcion',

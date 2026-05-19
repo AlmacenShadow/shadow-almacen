@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MotivosAjusteSeeder::class,
             ParametrosSeeder::class,
+            RalCatalogoSeeder::class,
             DemoDataSeeder::class,
         ]);
     }

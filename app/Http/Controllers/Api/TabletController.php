@@ -34,15 +34,23 @@ class TabletController extends Controller
             ->get();
 
         $productos = DB::table('productos')
-            ->where('activo', true)
-            ->select('id', 'ral', 'textura', 'brillo_pct', 'nombre_interno')
-            ->orderBy('ral')
+            ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
+            ->where('productos.activo', true)
+            ->select(
+                'productos.id',
+                'productos.ral',
+                DB::raw('texturas.nombre as textura'),
+                'productos.brillo_pct',
+                'productos.nombre_interno'
+            )
+            ->orderBy('productos.ral')
             ->get();
 
         // Incluimos TODOS los lotes (incluso con stock 0) porque la tablet
         // necesita poder hacer retornos sobre lotes que se vaciaron.
         $lotes = DB::table('lotes')
             ->join('productos', 'productos.id', '=', 'lotes.producto_id')
+            ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
             ->leftJoin('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
             ->select(
                 'lotes.id',
@@ -52,7 +60,7 @@ class TabletController extends Controller
                 'lotes.fecha_vencimiento',
                 'lotes.peso_tara_unitario_kg',
                 'productos.ral',
-                'productos.textura',
+                DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
                 'productos.nombre_interno',
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_actual_kg')
@@ -95,7 +103,7 @@ class TabletController extends Controller
      */
     public function mostrarLote(string $codigo): JsonResponse
     {
-        $lote = Lote::with('producto')->where('codigo_barcode', $codigo)->first();
+        $lote = Lote::with(['producto.textura'])->where('codigo_barcode', $codigo)->first();
 
         if (! $lote) {
             return response()->json(['error' => 'Lote no encontrado'], 404);
@@ -125,7 +133,7 @@ class TabletController extends Controller
             ],
             'producto' => [
                 'ral'            => $lote->producto->ral,
-                'textura'        => $lote->producto->textura,
+                'textura'        => $lote->producto->textura?->nombre,
                 'brillo_pct'     => $lote->producto->brillo_pct,
                 'nombre_interno' => $lote->producto->nombre_interno,
             ],
