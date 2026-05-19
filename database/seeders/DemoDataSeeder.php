@@ -19,28 +19,33 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Usuarios
-        DB::table('usuarios')->updateOrInsert(
-            ['codigo_barcode' => 'ADM-0001'],
-            [
-                'nombre'        => 'Admin Demo',
-                'rol'           => 'admin',
-                'email'         => 'admin@shadowpanama.com',
-                'password_hash' => Hash::make('admin123'),
-                'activo'        => true,
-            ]
-        );
+        // Usuarios con login al panel.
+        // Importante: NO usar updateOrInsert con password_hash, porque eso
+        // pisaría la contraseña real en producción si alguien corre db:seed
+        // por error. Solo insertamos si no existe; si existe, no tocamos nada.
+        // Las contraseñas reales se gestionan fuera del seeder (panel o SQL directo).
+        if (!DB::table('usuarios')->where('codigo_barcode', 'ADM-0001')->exists()) {
+            DB::table('usuarios')->insert([
+                'codigo_barcode' => 'ADM-0001',
+                'nombre'         => 'Admin',
+                'rol'            => 'admin',
+                'email'          => 'admin@shadowpanama.com',
+                // Placeholder inservible — debe cambiarse vía panel antes del primer login.
+                'password_hash'  => Hash::make(bin2hex(random_bytes(16))),
+                'activo'         => true,
+            ]);
+        }
 
-        DB::table('usuarios')->updateOrInsert(
-            ['codigo_barcode' => 'ENC-0001'],
-            [
-                'nombre'        => 'Luis Ramírez',
-                'rol'           => 'encargado',
-                'email'         => 'luis@shadowpanama.com',
-                'password_hash' => Hash::make('luis123'),
-                'activo'        => true,
-            ]
-        );
+        if (!DB::table('usuarios')->where('codigo_barcode', 'ENC-0001')->exists()) {
+            DB::table('usuarios')->insert([
+                'codigo_barcode' => 'ENC-0001',
+                'nombre'         => 'Luis Ramírez',
+                'rol'            => 'encargado',
+                'email'          => 'luis@shadowpanama.com',
+                'password_hash'  => Hash::make(bin2hex(random_bytes(16))),
+                'activo'         => true,
+            ]);
+        }
 
         DB::table('usuarios')->updateOrInsert(
             ['codigo_barcode' => 'PNT-0001'],

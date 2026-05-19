@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LoteController;
+use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/lotes/nuevo',     [LoteController::class, 'create'])->name('lotes.create');
     Route::post('/lotes',          [LoteController::class, 'store'])->name('lotes.store');
     Route::get('/lotes/{lote}',    [LoteController::class, 'show'])->name('lotes.show');
+
+    Route::get('/movimientos',     [MovimientoController::class, 'index'])->name('movimientos.index');
 
     Route::get('/productos',                 [ProductoController::class, 'index'])->name('productos.index');
     Route::get('/productos/nuevo',           [ProductoController::class, 'create'])->name('productos.create');
