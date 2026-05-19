@@ -1,14 +1,12 @@
-﻿-- ============================================================
--- Upgrade Productos 2026-05-17 — Catálogo K7 + Texturas + FK
--- Base: shadowpa_almacen (MySQL en cPanel)
--- Aplicar en phpMyAdmin → SQL si NO hay SSH habilitado.
--- Si SSH SÍ está habilitado, mejor:
---   cd /home/shadowpa/repositories/shadow-almacen
---   php artisan migrate --force
---   php artisan db:seed --class=RalCatalogoSeeder --force
--- ============================================================
+﻿/* =================================================== */
+/* Upgrade Productos 2026-05-17 - Catalogo K7 + Texturas + FK */
+/* Base: shadowpa_almacen (MySQL en cPanel) */
+/* Aplicar en phpMyAdmin: pestaña Import (subir archivo) o SQL (pegar contenido). */
+/* Si SSH habilitado, mejor: php artisan migrate --force && php artisan db:seed --class=RalCatalogoSeeder --force */
+/* Los comentarios estan en bloque /* * / a proposito: funcionan aunque el viewer aplaste los saltos de linea. */
+/* =================================================== */
 
--- 1) Tabla texturas
+/* 1) Tabla texturas */
 CREATE TABLE IF NOT EXISTS `texturas` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `nombre` varchar(40) NOT NULL,
@@ -19,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `texturas` (
   UNIQUE KEY `texturas_nombre_unique` (`nombre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 2) Texturas iniciales (idempotente)
+/* 2) Texturas iniciales (idempotente) */
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Mate', 10, 1);
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Brillante', 20, 1);
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Texturizado', 30, 1);
@@ -28,7 +26,7 @@ INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Granulado',
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Cuero', 60, 1);
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Metálico', 70, 1);
 
--- 3) Tabla ral_catalogo
+/* 3) Tabla ral_catalogo */
 CREATE TABLE IF NOT EXISTS `ral_catalogo` (
   `codigo` varchar(16) NOT NULL,
   `nombre_oficial` varchar(120) NOT NULL,
@@ -38,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `ral_catalogo` (
   PRIMARY KEY (`codigo`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4) Cargar los 213 colores K7
+/* 4) Cargar los 213 colores K7 */
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL1000', 'Beige verdoso', '#BEBD7F', 'Amarillo', 0) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL1001', 'Beige', '#C2B078', 'Amarillo', 1) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL1002', 'Beige arena', '#C6A664', 'Amarillo', 2) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
@@ -252,38 +250,34 @@ INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`)
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL9018', 'Blanco papiro', '#D7D7D7', 'Blanco/Negro', 210) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL9022', 'Gris claro perla', '#9C9C9C', 'Blanco/Negro', 211) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL9023', 'Gris oscuro perla', '#828282', 'Blanco/Negro', 212) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
--- Total colores insertados: 213
+/* Total colores insertados: 213 */
 
--- 5) Alterar productos: agregar textura_id + hex_override, poblar, dropear textura
+/* 5) Productos: agregar textura_id + hex_override, poblar, dropear textura */
 ALTER TABLE `productos` ADD COLUMN `textura_id` bigint unsigned NULL AFTER `ral`;
 ALTER TABLE `productos` ADD COLUMN `hex_override` char(7) NULL AFTER `nombre_interno`;
 
--- 5a) Salvaguarda: si en producción hay productos con texturas que no están
---     en la tabla todavía (ej. un valor custom que se agregó a mano), las
---     agregamos antes del UPDATE para que el JOIN matche y no se pierdan datos.
+/* 5a) Salvaguarda: si hay productos con texturas no incluidas arriba, agregarlas antes del UPDATE. */
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`)
 SELECT DISTINCT productos.textura, 100, 1
 FROM `productos`
 WHERE productos.textura IS NOT NULL
   AND productos.textura NOT IN (SELECT nombre FROM texturas);
 
--- 5b) Poblar textura_id desde la string anterior
-UPDATE `productos` p
-JOIN `texturas` t ON t.nombre = p.textura
+/* 5b) Poblar textura_id desde la string anterior */
+UPDATE `productos` p JOIN `texturas` t ON t.nombre = p.textura
 SET p.textura_id = t.id
 WHERE p.textura_id IS NULL;
 
--- 5c) Verificación previa al DROP — si esto devuelve > 0, NO continuar:
---     habría productos cuya textura no se logró mapear y perderías datos.
--- SELECT id, ral, textura FROM productos WHERE textura_id IS NULL;
+/* 5c) VERIFICACION OPCIONAL: si esta consulta devuelve filas, NO ejecutar el bloque 5d todavia. Hay productos sin mapear. Avisar al desarrollador. */
+/*     SELECT id, ral, textura FROM productos WHERE textura_id IS NULL; */
 
--- 5d) Sustituir constraint único y dropear columna vieja
+/* 5d) Dropear columna vieja y recrear constraint unico (PUNTO DE NO RETORNO) */
 ALTER TABLE `productos` DROP INDEX `uk_producto`;
 ALTER TABLE `productos` DROP COLUMN `textura`;
 ALTER TABLE `productos` ADD UNIQUE KEY `uk_producto` (`ral`, `textura_id`, `brillo_pct`);
 ALTER TABLE `productos` ADD CONSTRAINT `productos_textura_id_foreign` FOREIGN KEY (`textura_id`) REFERENCES `texturas`(`id`);
 
--- 6) Registrar las 3 migraciones como aplicadas para que `php artisan migrate` no las vuelva a correr
+/* 6) Registrar las 3 migraciones como aplicadas para que php artisan migrate no las vuelva a correr */
 INSERT IGNORE INTO `migrations` (`migration`, `batch`)
 SELECT m, (SELECT COALESCE(MAX(batch),0)+1 FROM `migrations`) FROM (
   SELECT '2026_05_17_120000_create_texturas_table' AS m UNION
@@ -291,8 +285,7 @@ SELECT m, (SELECT COALESCE(MAX(batch),0)+1 FROM `migrations`) FROM (
   SELECT '2026_05_17_120200_alter_productos_textura_to_fk'
 ) AS t;
 
--- 7) Verificación
+/* 7) Verificacion final - esperado: 7 texturas, 213 ral_catalogo, productos segun produccion */
 SELECT 'texturas' AS tabla, COUNT(*) AS filas FROM texturas
 UNION ALL SELECT 'ral_catalogo', COUNT(*) FROM ral_catalogo
 UNION ALL SELECT 'productos con textura_id', COUNT(*) FROM productos WHERE textura_id IS NOT NULL;
--- Esperado: 7 texturas, 213 ral_catalogo, productos según producción.
