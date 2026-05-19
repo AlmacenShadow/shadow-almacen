@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- Upgrade Productos 2026-05-17 — Catálogo K7 + Texturas + FK
 -- Base: shadowpa_almacen (MySQL en cPanel)
 -- Aplicar en phpMyAdmin → SQL si NO hay SSH habilitado.
@@ -258,12 +258,26 @@ INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`)
 ALTER TABLE `productos` ADD COLUMN `textura_id` bigint unsigned NULL AFTER `ral`;
 ALTER TABLE `productos` ADD COLUMN `hex_override` char(7) NULL AFTER `nombre_interno`;
 
--- 5a) Poblar textura_id desde la string anterior
+-- 5a) Salvaguarda: si en producción hay productos con texturas que no están
+--     en la tabla todavía (ej. un valor custom que se agregó a mano), las
+--     agregamos antes del UPDATE para que el JOIN matche y no se pierdan datos.
+INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`)
+SELECT DISTINCT productos.textura, 100, 1
+FROM `productos`
+WHERE productos.textura IS NOT NULL
+  AND productos.textura NOT IN (SELECT nombre FROM texturas);
+
+-- 5b) Poblar textura_id desde la string anterior
 UPDATE `productos` p
 JOIN `texturas` t ON t.nombre = p.textura
-SET p.textura_id = t.id WHERE p.textura_id IS NULL;
+SET p.textura_id = t.id
+WHERE p.textura_id IS NULL;
 
--- 5b) Sustituir constraint único
+-- 5c) Verificación previa al DROP — si esto devuelve > 0, NO continuar:
+--     habría productos cuya textura no se logró mapear y perderías datos.
+-- SELECT id, ral, textura FROM productos WHERE textura_id IS NULL;
+
+-- 5d) Sustituir constraint único y dropear columna vieja
 ALTER TABLE `productos` DROP INDEX `uk_producto`;
 ALTER TABLE `productos` DROP COLUMN `textura`;
 ALTER TABLE `productos` ADD UNIQUE KEY `uk_producto` (`ral`, `textura_id`, `brillo_pct`);
