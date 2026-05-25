@@ -72,24 +72,31 @@
         ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × 3) en hoja Avery 5160.
       </p>
 
-      {{-- Preview de UNA etiqueta (referencial) --}}
+      {{-- Preview de UNA etiqueta (replica el diseño del PDF) --}}
       <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 mb-4">
-        <div class="border-2 border-slate-800 rounded p-2 bg-slate-50" style="aspect-ratio: 2.625 / 1;">
-          <div class="flex justify-between items-start">
-            <div class="text-[8px] font-bold text-slate-500 tracking-widest">SHADOW</div>
-            <div class="text-[8px] text-slate-400">66.7×25.4mm</div>
+        <div class="border-2 border-slate-800 rounded px-2 py-1.5 bg-slate-50 relative" style="aspect-ratio: 2.625 / 1;">
+          <div class="text-[8px] font-bold text-slate-500 tracking-widest">SHADOW</div>
+          <div class="absolute top-3 right-2 text-right text-[8px] text-slate-500 leading-tight">
+            <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
+            @if ($lote->fecha_vencimiento)
+              <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
+            @endif
           </div>
-          <p class="font-bold text-slate-900 mt-0.5 text-sm leading-tight">{{ $lote->producto->ral }}</p>
-          <p class="text-[10px] text-slate-700 leading-tight">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</p>
-          <p class="text-[9px] text-slate-600 mt-0.5">Recep. {{ $lote->fecha_recepcion->format('Y-m-d') }}@if ($lote->fecha_vencimiento) · Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }} @endif</p>
-          <div class="mt-1 h-3 bg-black"
-               style="background-image: repeating-linear-gradient(90deg, black 0, black 1px, white 1px, white 3px);"></div>
-          <p class="text-center text-[8px] mt-0 font-mono font-bold">{{ $lote->codigo_barcode }}</p>
+          <p class="font-bold text-slate-900 mt-0.5 text-sm leading-none">{{ $lote->producto->ral }}</p>
+          <p class="text-[9px] text-slate-700 leading-tight mt-0.5 truncate pr-20">
+            @if ($lote->producto->nombre_ral_oficial)
+              <span class="font-bold uppercase">{{ $lote->producto->nombre_ral_oficial }}</span>
+            @endif
+            <span class="text-slate-500">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</span>
+          </p>
+          <div class="mt-1 h-3.5 bg-black"
+               style="background-image: repeating-linear-gradient(90deg, black 0, black 1.5px, white 1.5px, white 3px);"></div>
+          <p class="text-center text-[8px] mt-0.5 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
         </div>
       </div>
 
       {{-- Form de generación del PDF --}}
-      <form method="GET" action="{{ route('lotes.etiquetas', $lote) }}" class="space-y-3">
+      <form method="GET" action="{{ route('lotes.etiquetas', $lote) }}" target="_blank" class="space-y-3">
         <div>
           <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
             ¿Cuántas etiquetas?
