@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Reportes operativos básicos del almacén:
@@ -132,5 +133,82 @@ class ReporteController extends Controller
         return view('reportes.index', compact(
             'desde', 'hasta', 'porProducto', 'porPintor', 'stockBajo'
         ));
+    }
+
+    /**
+     * Export CSV de las 3 secciones del reporte.
+     * Query param `seccion`: stock-bajo | productos | pintores
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        if (! Auth::user()->puedeUsarPanel()) {
+            abort(403);
+        }
+
+        $seccion = $request->query('seccion', 'productos');
+
+        // Reaprovecho el método index para obtener los datasets
+        $view = $this->index($request);
+        $data = $view->getData();
+
+        return response()->streamDownload(function () use ($seccion, $data) {
+            $out = fopen('php://output', 'w');
+            // BOM para que Excel detecte UTF-8
+            fputs($out, "\xEF\xBB\xBF");
+
+            switch ($seccion) {
+                case 'stock-bajo':
+                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Nombre interno', 'Nivel', 'Stock actual (kg)', 'Stock minimo (kg)', 'Stock critico (kg)', 'Deficit (kg)']);
+                    foreach ($data['stockBajo'] as $r) {
+                        fputcsv($out, [
+                            $r->ral,
+                            $r->textura,
+                            $r->brillo_pct,
+                            $r->nombre_interno,
+                            strtoupper($r->nivel),
+                            number_format((float) $r->stock_kg, 3, '.', ''),
+                            number_format((float) $r->stock_minimo_kg, 3, '.', ''),
+                            number_format((float) $r->stock_critico_kg, 3, '.', ''),
+                            number_format(max(0, (float) $r->stock_minimo_kg - (float) $r->stock_kg), 3, '.', ''),
+                        ]);
+                    }
+                    break;
+
+                case 'pintores':
+                    fputcsv($out, ['Pintor', 'Codigo', 'Salidas (kg)', 'Retornos (kg)', 'Consumo neto (kg)', 'Movimientos']);
+                    foreach ($data['porPintor'] as $r) {
+                        fputcsv($out, [
+                            $r->nombre,
+                            $r->codigo_barcode,
+                            number_format((float) $r->kg_salidas, 3, '.', ''),
+                            number_format((float) $r->kg_retornos, 3, '.', ''),
+                            number_format((float) $r->kg_netos, 3, '.', ''),
+                            $r->movimientos_count,
+                        ]);
+                    }
+                    break;
+
+                case 'productos':
+                default:
+                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Nombre interno', 'Salidas (kg)', 'Retornos (kg)', 'Consumo neto (kg)', 'Movimientos']);
+                    foreach ($data['porProducto'] as $r) {
+                        fputcsv($out, [
+                            $r->ral,
+                            $r->textura,
+                            $r->brillo_pct,
+                            $r->nombre_interno,
+                            number_format((float) $r->kg_salidas, 3, '.', ''),
+                            number_format((float) $r->kg_retornos, 3, '.', ''),
+                            number_format((float) $r->kg_netos, 3, '.', ''),
+                            $r->movimientos_count,
+                        ]);
+                    }
+                    break;
+            }
+
+            fclose($out);
+        }, "reporte-{$seccion}-{$data['desde']->format('Ymd')}_a_{$data['hasta']->format('Ymd')}.csv", [
+            'Content-Type' => 'text/csv; charset=utf-8',
+        ]);
     }
 }

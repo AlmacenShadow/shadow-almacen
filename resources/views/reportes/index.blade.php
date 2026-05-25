@@ -53,9 +53,17 @@
         <h3 class="font-semibold text-slate-800">Stock bajo y crítico</h3>
         <p class="text-xs text-slate-500 mt-0.5">Estado actual — independiente del rango de fechas.</p>
       </div>
-      <div class="text-xs text-slate-500 flex gap-4">
-        <span><span class="inline-block w-3 h-3 rounded-full bg-red-500 align-middle"></span> {{ $stockBajo->where('nivel','critico')->count() }} crítico</span>
-        <span><span class="inline-block w-3 h-3 rounded-full bg-amber-500 align-middle"></span> {{ $stockBajo->where('nivel','bajo')->count() }} bajo</span>
+      <div class="flex items-center gap-4">
+        <div class="text-xs text-slate-500 flex gap-4">
+          <span><span class="inline-block w-3 h-3 rounded-full bg-red-500 align-middle"></span> {{ $stockBajo->where('nivel','critico')->count() }} crítico</span>
+          <span><span class="inline-block w-3 h-3 rounded-full bg-amber-500 align-middle"></span> {{ $stockBajo->where('nivel','bajo')->count() }} bajo</span>
+        </div>
+        @if ($stockBajo->isNotEmpty())
+          <a href="{{ route('reportes.export', ['seccion' => 'stock-bajo']) }}"
+             class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded">
+            ⬇ CSV
+          </a>
+        @endif
       </div>
     </div>
 
@@ -116,11 +124,19 @@
 
   {{-- ============= CONSUMO POR PRODUCTO ============= --}}
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-slate-200">
-      <h3 class="font-semibold text-slate-800">Consumo por producto</h3>
-      <p class="text-xs text-slate-500 mt-0.5">
-        Salidas y retornos del {{ $desde->format('Y-m-d') }} al {{ $hasta->format('Y-m-d') }}. Ordenado por consumo neto descendente.
-      </p>
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold text-slate-800">Consumo por producto</h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Salidas y retornos del {{ $desde->format('Y-m-d') }} al {{ $hasta->format('Y-m-d') }}. Ordenado por consumo neto descendente.
+        </p>
+      </div>
+      @if ($porProducto->isNotEmpty())
+        <a href="{{ route('reportes.export', ['seccion' => 'productos', 'desde' => $desde->format('Y-m-d'), 'hasta' => $hasta->format('Y-m-d')]) }}"
+           class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded">
+          ⬇ CSV
+        </a>
+      @endif
     </div>
 
     @if ($porProducto->isEmpty())
@@ -172,11 +188,19 @@
 
   {{-- ============= CONSUMO POR PINTOR ============= --}}
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-200">
-      <h3 class="font-semibold text-slate-800">Consumo por pintor</h3>
-      <p class="text-xs text-slate-500 mt-0.5">
-        Salidas y retornos hechos por pintores en el período. Excluye ajustes y correcciones administrativas.
-      </p>
+    <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold text-slate-800">Consumo por pintor</h3>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Salidas y retornos hechos por pintores en el período. Excluye ajustes y correcciones administrativas.
+        </p>
+      </div>
+      @if ($porPintor->isNotEmpty())
+        <a href="{{ route('reportes.export', ['seccion' => 'pintores', 'desde' => $desde->format('Y-m-d'), 'hasta' => $hasta->format('Y-m-d')]) }}"
+           class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded">
+          ⬇ CSV
+        </a>
+      @endif
     </div>
 
     @if ($porPintor->isEmpty())

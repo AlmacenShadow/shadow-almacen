@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');
 
     Route::get('/reportes',                  [ReporteController::class, 'index'])->name('reportes.index');
+    Route::get('/reportes/export',           [ReporteController::class, 'exportCsv'])->name('reportes.export');
 
     Route::get('/usuarios',                [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::get('/usuarios/tablero',        [UsuarioController::class, 'tablero'])->name('usuarios.tablero');
