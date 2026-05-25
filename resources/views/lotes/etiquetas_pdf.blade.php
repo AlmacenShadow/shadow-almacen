@@ -57,10 +57,20 @@
       margin-bottom: 0.5mm;
     }
     .et-ral {
-      font-size: 12pt;
+      font-size: 11pt;
       font-weight: bold;
       line-height: 1;
       margin: 0;
+    }
+    .et-nombre-ral {
+      font-size: 6.5pt;
+      color: #444;
+      font-style: italic;
+      line-height: 1;
+      margin: 0.3mm 0 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .et-textura {
       font-size: 7pt;
@@ -103,6 +113,9 @@
         <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
           <span class="et-header">SHADOW</span>
           <p class="et-ral">{{ $lote->producto->ral }}</p>
+          @if ($lote->producto->nombre_ral_oficial)
+            <p class="et-nombre-ral">{{ $lote->producto->nombre_ral_oficial }}</p>
+          @endif
           <p class="et-textura">
             {{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%
           </p>

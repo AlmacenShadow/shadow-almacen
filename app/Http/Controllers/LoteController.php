@@ -205,7 +205,7 @@ class LoteController extends Controller
         $cantidad   = $params['cantidad']   ?? $defaultCantidad;
         $desdeFila  = $params['desde_fila'] ?? 1;
 
-        $lote->load('producto.textura');
+        $lote->load('producto.textura', 'producto.ralCatalogo');
 
         // Construimos las posiciones (offset_top, offset_left, en mm) de cada
         // etiqueta en la página. Cada hoja: 3 cols x 10 rows. Primera hoja
