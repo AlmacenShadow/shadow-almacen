@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `texturas` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `texturas_nombre_unique` (`nombre`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /* 2) Texturas iniciales (idempotente: INSERT IGNORE) */
 INSERT IGNORE INTO `texturas` (`nombre`, `orden`, `activo`) VALUES ('Mate', 10, 1);
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `ral_catalogo` (
   `grupo` varchar(40) NOT NULL,
   `orden` smallint unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`codigo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /* 4) Cargar 213 colores K7 (idempotente: ON DUPLICATE KEY UPDATE) */
 INSERT INTO `ral_catalogo` (`codigo`, `nombre_oficial`, `hex`, `grupo`, `orden`) VALUES ('RAL1000', 'Beige verdoso', '#BEBD7F', 'Amarillo', 0) ON DUPLICATE KEY UPDATE nombre_oficial=VALUES(nombre_oficial), hex=VALUES(hex), grupo=VALUES(grupo), orden=VALUES(orden);
