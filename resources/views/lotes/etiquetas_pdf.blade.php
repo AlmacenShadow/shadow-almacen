@@ -48,25 +48,20 @@
       /* sin borde en producción; descomentar para debug de alineado */
       /* border: 0.1mm dashed #ccc; */
     }
-    /* Cabecera con dos columnas: izquierda info producto, derecha fechas */
-    .et-head {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
+    /* Columna izquierda: SHADOW + RAL + nombre/textura.
+       Ocupa el ancho izquierdo, la columna derecha (fechas) la posicionamos
+       absolute para que dompdf nos deje controlar su posición vertical. */
+    .et-info {
+      padding-right: 22mm; /* deja espacio para que las fechas absolute no pisen */
     }
-    .et-head td {
-      vertical-align: top;
-      padding: 0;
-      line-height: 1.1;
-    }
-    .et-left {
-      width: 70%;
-    }
-    .et-right {
-      width: 30%;
+    .et-fechas-abs {
+      position: absolute;
+      top: 3.5mm;          /* Rec al nivel del RAL, Vence al nivel del subtítulo */
+      right: 2.5mm;
       text-align: right;
       font-size: 6pt;
       color: #555;
+      line-height: 1.3;
     }
     .et-shadow {
       font-size: 6pt;
@@ -91,18 +86,19 @@
       text-overflow: ellipsis;
     }
     .et-nombre {
-      font-style: italic;
-      color: #555;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #222;
     }
     .et-textura-inline {
-      color: #222;
+      color: #555;
     }
     .et-barcode {
       margin-top: 1mm;
     }
     .et-barcode img {
       width: 100%;
-      height: 7mm;
+      height: 9mm;
       display: block;
     }
     .et-codigo {
@@ -110,7 +106,7 @@
       font-size: 7pt;
       font-weight: bold;
       text-align: center;
-      margin: 0;
+      margin: 1mm 0 0 0;
       line-height: 1;
     }
   </style>
@@ -124,26 +120,22 @@
           $left = 4.8  + ($celda['col'] - 1) * 69.9;
         @endphp
         <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
-          <table class="et-head">
-            <tr>
-              <td class="et-left">
-                <span class="et-shadow">SHADOW</span>
-                <div class="et-ral">{{ $lote->producto->ral }}</div>
-                <div class="et-detalle">
-                  @if ($lote->producto->nombre_ral_oficial)
-                    <span class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</span>
-                  @endif
-                  <span class="et-textura-inline">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</span>
-                </div>
-              </td>
-              <td class="et-right">
-                <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
-                @if ($lote->fecha_vencimiento)
-                  <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
-                @endif
-              </td>
-            </tr>
-          </table>
+          <div class="et-info">
+            <span class="et-shadow">SHADOW</span>
+            <div class="et-ral">{{ $lote->producto->ral }}</div>
+            <div class="et-detalle">
+              @if ($lote->producto->nombre_ral_oficial)
+                <span class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</span>
+              @endif
+              <span class="et-textura-inline">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</span>
+            </div>
+          </div>
+          <div class="et-fechas-abs">
+            <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
+            @if ($lote->fecha_vencimiento)
+              <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
+            @endif
+          </div>
           <div class="et-barcode">
             <img src="{{ $barcodeDataUri }}" alt="{{ $lote->codigo_barcode }}">
           </div>
