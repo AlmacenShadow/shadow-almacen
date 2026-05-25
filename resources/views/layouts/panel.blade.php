@@ -30,6 +30,10 @@
              class="{{ request()->routeIs('productos.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
             Productos
           </a>
+          <a href="{{ route('reportes.index') }}"
+             class="{{ request()->routeIs('reportes.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
+            Reportes
+          </a>
           @if (auth()->user()->esAdmin())
             <a href="{{ route('usuarios.index') }}"
                class="{{ request()->routeIs('usuarios.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">

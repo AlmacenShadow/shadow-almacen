@@ -33,8 +33,9 @@ class Movimiento extends Model
         'device_at'   => 'datetime',
     ];
 
-    public function lote(): BelongsTo    { return $this->belongsTo(Lote::class); }
-    public function usuario(): BelongsTo { return $this->belongsTo(Usuario::class); }
+    public function lote(): BelongsTo         { return $this->belongsTo(Lote::class); }
+    public function usuario(): BelongsTo      { return $this->belongsTo(Usuario::class); }
+    public function motivoAjuste(): BelongsTo { return $this->belongsTo(\App\Models\MotivoAjuste::class, 'motivo_ajuste_id'); }
 
     /** El movimiento ORIGINAL que este movimiento está corrigiendo (si es una corrección). */
     public function corrige(): BelongsTo

@@ -5,6 +5,7 @@ use App\Http\Controllers\LoteController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\RalCatalogoController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\TexturaController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/texturas/{textura}',     [TexturaController::class, 'destroy'])->name('texturas.destroy');
 
     Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');
+
+    Route::get('/reportes',                  [ReporteController::class, 'index'])->name('reportes.index');
 
     Route::get('/usuarios',                [UsuarioController::class, 'index'])->name('usuarios.index');
     Route::get('/usuarios/tablero',        [UsuarioController::class, 'tablero'])->name('usuarios.tablero');
