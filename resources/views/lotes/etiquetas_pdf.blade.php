@@ -43,49 +43,62 @@
       width: 66.7mm;
       height: 25.4mm;
       box-sizing: border-box;
-      padding: 2mm 2.5mm;
+      padding: 1.5mm 2.5mm;
       overflow: hidden;
-      /* sin borde en producción; se descomenta para debug del alineado */
+      /* sin borde en producción; descomentar para debug de alineado */
       /* border: 0.1mm dashed #ccc; */
     }
-    .et-header {
-      display: block;
+    /* Cabecera con dos columnas: izquierda info producto, derecha fechas */
+    .et-head {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .et-head td {
+      vertical-align: top;
+      padding: 0;
+      line-height: 1.1;
+    }
+    .et-left {
+      width: 70%;
+    }
+    .et-right {
+      width: 30%;
+      text-align: right;
+      font-size: 6pt;
+      color: #555;
+    }
+    .et-shadow {
       font-size: 6pt;
       letter-spacing: 0.5pt;
       font-weight: bold;
       color: #666;
-      margin-bottom: 0.5mm;
     }
     .et-ral {
       font-size: 11pt;
       font-weight: bold;
       line-height: 1;
-      margin: 0;
+      margin: 0.2mm 0 0 0;
     }
-    .et-nombre-ral {
+    /* Línea inline con nombre oficial + textura + brillo */
+    .et-detalle {
       font-size: 6.5pt;
-      color: #444;
-      font-style: italic;
+      color: #333;
+      margin: 0.5mm 0 0 0;
       line-height: 1;
-      margin: 0.3mm 0 0 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .et-textura {
-      font-size: 7pt;
-      color: #333;
-      margin: 0.3mm 0 0 0;
-      line-height: 1;
-    }
-    .et-fechas {
-      font-size: 6.5pt;
+    .et-nombre {
+      font-style: italic;
       color: #555;
-      margin: 0.5mm 0 0 0;
-      line-height: 1.1;
+    }
+    .et-textura-inline {
+      color: #222;
     }
     .et-barcode {
-      margin-top: 0.5mm;
+      margin-top: 1mm;
     }
     .et-barcode img {
       width: 100%;
@@ -111,17 +124,26 @@
           $left = 4.8  + ($celda['col'] - 1) * 69.9;
         @endphp
         <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
-          <span class="et-header">SHADOW</span>
-          <p class="et-ral">{{ $lote->producto->ral }}</p>
-          @if ($lote->producto->nombre_ral_oficial)
-            <p class="et-nombre-ral">{{ $lote->producto->nombre_ral_oficial }}</p>
-          @endif
-          <p class="et-textura">
-            {{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%
-          </p>
-          <p class="et-fechas">
-            Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}@if ($lote->fecha_vencimiento) · Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}@endif
-          </p>
+          <table class="et-head">
+            <tr>
+              <td class="et-left">
+                <span class="et-shadow">SHADOW</span>
+                <div class="et-ral">{{ $lote->producto->ral }}</div>
+                <div class="et-detalle">
+                  @if ($lote->producto->nombre_ral_oficial)
+                    <span class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</span>
+                  @endif
+                  <span class="et-textura-inline">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</span>
+                </div>
+              </td>
+              <td class="et-right">
+                <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
+                @if ($lote->fecha_vencimiento)
+                  <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
+                @endif
+              </td>
+            </tr>
+          </table>
           <div class="et-barcode">
             <img src="{{ $barcodeDataUri }}" alt="{{ $lote->codigo_barcode }}">
           </div>
