@@ -1,4 +1,6 @@
-﻿/* ================================================= */
+﻿SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+/* ================================================= */
 /* Upgrade Productos 2026-05-17  -  Idempotente */
 /* Base: shadowpa_almacen (MySQL en cPanel) */
 /* Se puede ejecutar multiples veces sin error. */
