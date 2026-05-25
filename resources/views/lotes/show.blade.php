@@ -233,6 +233,14 @@
                 <a href="{{ route('movimientos.corregir', $m->id) }}"
                    class="text-amber-600 hover:underline text-xs">corregir</a>
               @endif
+              @if (auth()->user()->esAdmin() && !$m->corregido_por_id)
+                <form method="POST" action="{{ route('movimientos.destroy', $m->id) }}" class="inline ml-2"
+                      onsubmit="var r=prompt('Razón del borrado de mov #{{ $m->id }} (min 10 caracteres):'); if(!r||r.length<10){alert('Razón muy corta.');return false;} this.querySelector('input[name=razon]').value=r; return confirm('¿Borrar definitivamente el movimiento #{{ $m->id }}?');">
+                  @csrf @method('DELETE')
+                  <input type="hidden" name="razon" value="">
+                  <button type="submit" class="text-red-600 hover:underline text-xs">borrar</button>
+                </form>
+              @endif
             </td>
           </tr>
         @endforeach

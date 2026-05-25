@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -160,5 +161,56 @@ class MovimientoController extends Controller
         return redirect()
             ->route('lotes.show', $movimiento->lote_id)
             ->with('flash', "Corrección registrada (movimiento #{$correccion->id}). El stock del lote se actualizó.");
+    }
+
+    /**
+     * Borrado duro de un movimiento. Solo admin. Requiere razón.
+     * Use case: data de prueba, duplicados que sync_uuid no atrapó,
+     * o casos donde la corrección compensatoria no aplica.
+     *
+     * Deja log en storage/logs/laravel.log para auditoría externa al sistema.
+     */
+    public function destroy(Request $request, Movimiento $movimiento): RedirectResponse
+    {
+        $user = Auth::user();
+        if (! $user->esAdmin()) {
+            abort(403, 'Solo el admin puede borrar movimientos. El flujo normal es "Corregir".');
+        }
+
+        $data = $request->validate([
+            'razon' => ['required', 'string', 'min:10', 'max:500'],
+        ], [
+            'razon.required' => 'Tienes que dar una razón para borrar (mínimo 10 caracteres).',
+            'razon.min'      => 'La razón es muy corta.',
+        ]);
+
+        // Si tiene corrección pendiente o ES corrección, refuse para que el admin
+        // decida limpio: o borra ambos o ninguno.
+        if (Movimiento::where('corrige_movimiento_id', $movimiento->id)->exists()) {
+            return back()->withErrors([
+                'razon' => 'Este movimiento tiene una corrección asociada. Borra primero la corrección o ambos en orden.',
+            ]);
+        }
+
+        $loteId = $movimiento->lote_id;
+
+        Log::warning('MOVIMIENTO_HARD_DELETE', [
+            'borrado_por_usuario_id' => $user->id,
+            'borrado_por_nombre'     => $user->nombre,
+            'movimiento_id'          => $movimiento->id,
+            'lote_id'                => $movimiento->lote_id,
+            'tipo'                   => $movimiento->tipo,
+            'peso_kg'                => $movimiento->peso_kg,
+            'sync_uuid'              => $movimiento->sync_uuid,
+            'created_at'             => $movimiento->created_at?->toIso8601String(),
+            'razon'                  => $data['razon'],
+        ]);
+
+        $movimientoId = $movimiento->id;
+        $movimiento->delete();
+
+        return redirect()
+            ->route('lotes.show', $loteId)
+            ->with('flash', "Movimiento #{$movimientoId} eliminado. El stock se recalculó automáticamente.");
     }
 }

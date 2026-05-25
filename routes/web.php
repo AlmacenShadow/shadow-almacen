@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/movimientos',                            [MovimientoController::class, 'index'])->name('movimientos.index');
     Route::get('/movimientos/{movimiento}/corregir',      [MovimientoController::class, 'corregirForm'])->name('movimientos.corregir');
     Route::post('/movimientos/{movimiento}/corregir',     [MovimientoController::class, 'corregirStore'])->name('movimientos.corregir.store');
+    Route::delete('/movimientos/{movimiento}',            [MovimientoController::class, 'destroy'])->name('movimientos.destroy');
 
     Route::get('/productos',                 [ProductoController::class, 'index'])->name('productos.index');
     Route::get('/productos/nuevo',           [ProductoController::class, 'create'])->name('productos.create');
