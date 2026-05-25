@@ -105,6 +105,8 @@ class LoteController extends Controller
         $movimientos = DB::table('movimientos as m')
             ->leftJoin('usuarios', 'usuarios.id', '=', 'm.usuario_id')
             ->leftJoin('motivos_ajuste as ma', 'ma.id', '=', 'm.motivo_ajuste_id')
+            // existe otro movimiento que corrige a este?
+            ->leftJoin('movimientos as corr', 'corr.corrige_movimiento_id', '=', 'm.id')
             ->where('m.lote_id', $lote->id)
             ->orderBy('m.id', 'asc') // cronológico ASC: recepción primero, último al final
             ->select(
@@ -116,10 +118,12 @@ class LoteController extends Controller
                 'm.anomalia',
                 'm.tipo_anomalia',
                 'm.nota_texto',
+                'm.corrige_movimiento_id',
                 'usuarios.nombre as usuario_nombre',
                 'usuarios.rol as usuario_rol',
                 'ma.descripcion as motivo_descripcion',
                 'ma.signo as motivo_signo',
+                'corr.id as corregido_por_id',
             )
             ->get();
 

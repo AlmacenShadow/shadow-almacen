@@ -17,7 +17,8 @@ class MotivosAjusteSeeder extends Seeder
             ['DEVOLUCION_PROVEEDOR',  'Devolución al proveedor',                -1, true],
             ['INGRESO_AJUSTE_FISICO', 'Ajuste físico: sobrante encontrado',     +1, true],
             ['MERMA_AJUSTE_FISICO',   'Ajuste físico: faltante',                -1, true],
-            ['CORRECCION_REGISTRO',   'Corrección de movimiento mal capturado', +1, true],
+            ['CORRECCION_REGISTRO',     'Corrección: anular salida o ajuste negativo erróneo',  +1, true],
+            ['CORRECCION_REGISTRO_NEG', 'Corrección: anular retorno o ajuste positivo erróneo', -1, true],
             ['MUESTRA_QC',            'Muestra para prueba de color',           -1, true],
             ['OTRO',                  'Otro motivo',                            -1, true],
         ];

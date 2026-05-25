@@ -31,7 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/lotes/{lote}',         [LoteController::class, 'update'])->name('lotes.update');
     Route::delete('/lotes/{lote}',        [LoteController::class, 'destroy'])->name('lotes.destroy');
 
-    Route::get('/movimientos',     [MovimientoController::class, 'index'])->name('movimientos.index');
+    Route::get('/movimientos',                            [MovimientoController::class, 'index'])->name('movimientos.index');
+    Route::get('/movimientos/{movimiento}/corregir',      [MovimientoController::class, 'corregirForm'])->name('movimientos.corregir');
+    Route::post('/movimientos/{movimiento}/corregir',     [MovimientoController::class, 'corregirStore'])->name('movimientos.corregir.store');
 
     Route::get('/productos',                 [ProductoController::class, 'index'])->name('productos.index');
     Route::get('/productos/nuevo',           [ProductoController::class, 'create'])->name('productos.create');

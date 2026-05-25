@@ -17,6 +17,7 @@ class Movimiento extends Model
         'peso_kg',
         'peso_manual',
         'motivo_ajuste_id',
+        'corrige_movimiento_id',
         'nota_texto',
         'anomalia',
         'tipo_anomalia',
@@ -34,4 +35,16 @@ class Movimiento extends Model
 
     public function lote(): BelongsTo    { return $this->belongsTo(Lote::class); }
     public function usuario(): BelongsTo { return $this->belongsTo(Usuario::class); }
+
+    /** El movimiento ORIGINAL que este movimiento está corrigiendo (si es una corrección). */
+    public function corrige(): BelongsTo
+    {
+        return $this->belongsTo(Movimiento::class, 'corrige_movimiento_id');
+    }
+
+    /** El movimiento CORRECTIVO que anula a este (si fue corregido). */
+    public function correccion()
+    {
+        return $this->hasOne(Movimiento::class, 'corrige_movimiento_id');
+    }
 }

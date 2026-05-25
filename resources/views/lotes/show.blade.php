@@ -118,6 +118,7 @@
           <th class="text-right px-5 py-3">Δ Peso</th>
           <th class="text-right px-5 py-3">Stock resultante</th>
           <th class="text-left px-5 py-3">Detalle</th>
+          <th class="text-right px-5 py-3"></th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
@@ -148,6 +149,7 @@
             @if ($lote->proveedor) · {{ $lote->proveedor }} @endif
             @if ($lote->factura) · Fact. {{ $lote->factura }} @endif
           </td>
+          <td></td>
         </tr>
 
         {{-- Filas siguientes: movimientos en orden cronológico ASC --}}
@@ -173,7 +175,7 @@
             $signo = $delta < 0 ? '−' : '+';
             $pesoClase = $delta < 0 ? 'text-red-700' : 'text-emerald-700';
           @endphp
-          <tr class="{{ $m->anomalia ? 'bg-amber-50' : '' }}">
+          <tr id="mov-{{ $m->id }}" class="{{ $m->anomalia ? 'bg-amber-50' : '' }} {{ $m->corregido_por_id ? 'opacity-60' : '' }}">
             <td class="px-5 py-3 text-slate-600 tabular-nums whitespace-nowrap">
               {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('Y-m-d H:i') }}
             </td>
@@ -181,6 +183,16 @@
               <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $tipoBadge[0] }}">
                 {{ $tipoBadge[1] }}
               </span>
+              @if ($m->corrige_movimiento_id)
+                <a href="#mov-{{ $m->corrige_movimiento_id }}"
+                   class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-800 hover:bg-violet-200"
+                   title="Esta corrección anula al movimiento #{{ $m->corrige_movimiento_id }}">↺ corrige #{{ $m->corrige_movimiento_id }}</a>
+              @endif
+              @if ($m->corregido_por_id)
+                <a href="#mov-{{ $m->corregido_por_id }}"
+                   class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300"
+                   title="Anulado por el ajuste #{{ $m->corregido_por_id }}">corregido</a>
+              @endif
               @if ($m->anomalia)
                 <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-900"
                       title="Anomalía: {{ $m->tipo_anomalia ?? 'sin detalle' }}">⚠</span>
@@ -216,6 +228,12 @@
                 <span class="text-slate-300">—</span>
               @endif
             </td>
+            <td class="px-5 py-3 text-right whitespace-nowrap">
+              @if (!$m->corregido_por_id && !$m->corrige_movimiento_id)
+                <a href="{{ route('movimientos.corregir', $m->id) }}"
+                   class="text-amber-600 hover:underline text-xs">corregir</a>
+              @endif
+            </td>
           </tr>
         @endforeach
       </tbody>
@@ -229,7 +247,7 @@
           <td class="px-5 py-3 text-right tabular-nums font-bold text-emerald-700">
             {{ number_format($lote->stock_kg, 3) }} kg
           </td>
-          <td class="px-5 py-3 text-xs text-slate-500">
+          <td colspan="2" class="px-5 py-3 text-xs text-slate-500">
             @php
               $diff = abs($lote->stock_kg - $stockAcumulado);
             @endphp

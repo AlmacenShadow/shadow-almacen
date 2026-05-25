@@ -56,25 +56,33 @@ class DemoDataSeeder extends Seeder
             ['nombre' => 'Carlos Díaz', 'rol' => 'pintor', 'activo' => true]
         );
 
-        // Productos
-        DB::table('productos')->updateOrInsert(
-            ['ral' => 'RAL9005', 'textura' => 'Mate', 'brillo_pct' => 30],
-            [
-                'nombre_interno'   => 'Negro mate',
-                'stock_minimo_kg'  => 50,
-                'stock_critico_kg' => 20,
-                'activo'           => true,
-            ]
-        );
+        // Productos demo — usan textura_id en lugar de string desde 2026-05-17.
+        // Mate y Texturizado vienen del TexturasSeeder (creado en la migración).
+        $mateId        = DB::table('texturas')->where('nombre', 'Mate')->value('id');
+        $texturizadoId = DB::table('texturas')->where('nombre', 'Texturizado')->value('id');
 
-        DB::table('productos')->updateOrInsert(
-            ['ral' => 'RAL9016', 'textura' => 'Texturizado', 'brillo_pct' => 20],
-            [
-                'nombre_interno'   => 'Blanco texturizado',
-                'stock_minimo_kg'  => 40,
-                'stock_critico_kg' => 15,
-                'activo'           => true,
-            ]
-        );
+        if ($mateId) {
+            DB::table('productos')->updateOrInsert(
+                ['ral' => 'RAL9005', 'textura_id' => $mateId, 'brillo_pct' => 30],
+                [
+                    'nombre_interno'   => 'Negro mate',
+                    'stock_minimo_kg'  => 50,
+                    'stock_critico_kg' => 20,
+                    'activo'           => true,
+                ]
+            );
+        }
+
+        if ($texturizadoId) {
+            DB::table('productos')->updateOrInsert(
+                ['ral' => 'RAL9016', 'textura_id' => $texturizadoId, 'brillo_pct' => 20],
+                [
+                    'nombre_interno'   => 'Blanco texturizado',
+                    'stock_minimo_kg'  => 40,
+                    'stock_critico_kg' => 15,
+                    'activo'           => true,
+                ]
+            );
+        }
     }
 }
