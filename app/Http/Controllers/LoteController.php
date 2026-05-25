@@ -12,6 +12,14 @@ use Illuminate\View\View;
 
 class LoteController extends Controller
 {
+    /** Encargado y admin pueden editar/borrar lotes. */
+    private function autorizar(): void
+    {
+        if (! Auth::user()->puedeUsarPanel()) {
+            abort(403, 'No tienes acceso.');
+        }
+    }
+
     /** Lista de lotes con su stock actual desde la vista. */
     public function index(): View
     {
@@ -116,5 +124,81 @@ class LoteController extends Controller
             ->get();
 
         return view('lotes.show', compact('lote', 'movimientos'));
+    }
+
+    /**
+     * Formulario de edición. Algunos campos quedan read-only si el lote
+     * ya tiene movimientos asociados (no se puede cambiar el peso recibido
+     * sin romper el cálculo de stock — para eso están los ajustes).
+     */
+    public function edit(Lote $lote): View
+    {
+        $this->autorizar();
+
+        $productos = Producto::where('activo', true)->orderBy('ral')->get();
+        $cantMovimientos = $lote->movimientos()->count();
+        $sinMovimientos = $cantMovimientos === 0;
+
+        return view('lotes.edit', compact('lote', 'productos', 'cantMovimientos', 'sinMovimientos'));
+    }
+
+    /**
+     * Actualiza un lote. Si tiene movimientos, solo permite modificar
+     * los campos "blandos" (proveedor, factura, fecha_vencimiento).
+     * Si no tiene movimientos, permite editar todo excepto codigo_barcode.
+     */
+    public function update(Request $request, Lote $lote): RedirectResponse
+    {
+        $this->autorizar();
+
+        $tieneMovimientos = $lote->movimientos()->exists();
+
+        $rules = [
+            'proveedor'         => ['nullable', 'string', 'max:120'],
+            'factura'           => ['nullable', 'string', 'max:60'],
+            'fecha_vencimiento' => ['nullable', 'date', 'after:fecha_recepcion'],
+        ];
+
+        if (! $tieneMovimientos) {
+            $rules = array_merge($rules, [
+                'producto_id'                => ['required', 'exists:productos,id'],
+                'fecha_recepcion'            => ['required', 'date'],
+                'peso_total_recepcionado_kg' => ['required', 'numeric', 'min:0.001'],
+                'peso_tara_unitario_kg'      => ['required', 'numeric', 'min:0'],
+                'cantidad_cajas'             => ['required', 'integer', 'min:1'],
+            ]);
+        }
+
+        $data = $request->validate($rules);
+        $lote->update($data);
+
+        return redirect()
+            ->route('lotes.show', $lote)
+            ->with('flash', 'Lote actualizado.');
+    }
+
+    /**
+     * Solo permite borrar si el lote NO tiene movimientos asociados.
+     * Si los tiene, hay que corregir con ajustes en lugar de borrar
+     * para no romper el historial de auditoría.
+     */
+    public function destroy(Lote $lote): RedirectResponse
+    {
+        $this->autorizar();
+
+        $cant = $lote->movimientos()->count();
+        if ($cant > 0) {
+            return back()->withErrors([
+                'destroy' => "No puedo borrar el lote {$lote->codigo_barcode}: tiene {$cant} movimiento(s). "
+                    . "Para corregir errores, usa ajustes compensatorios o borra primero los movimientos."
+            ]);
+        }
+
+        $codigo = $lote->codigo_barcode;
+        $lote->delete();
+
+        return redirect()
+            ->route('lotes.index')
+            ->with('flash', "Lote {$codigo} eliminado.");
     }
 }

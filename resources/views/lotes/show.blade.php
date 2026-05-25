@@ -18,7 +18,13 @@
         </p>
       </div>
     </div>
-    <a href="{{ route('lotes.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← volver</a>
+    <div class="flex items-center gap-3">
+      <a href="{{ route('lotes.edit', $lote) }}"
+         class="text-sm bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded">
+        Editar lote
+      </a>
+      <a href="{{ route('lotes.index') }}" class="text-sm text-slate-500 hover:text-slate-800">← volver</a>
+    </div>
   </div>
 
   <div class="grid grid-cols-3 gap-6">

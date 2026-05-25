@@ -23,10 +23,13 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/lotes',           [LoteController::class, 'index'])->name('lotes.index');
-    Route::get('/lotes/nuevo',     [LoteController::class, 'create'])->name('lotes.create');
-    Route::post('/lotes',          [LoteController::class, 'store'])->name('lotes.store');
-    Route::get('/lotes/{lote}',    [LoteController::class, 'show'])->name('lotes.show');
+    Route::get('/lotes',                  [LoteController::class, 'index'])->name('lotes.index');
+    Route::get('/lotes/nuevo',            [LoteController::class, 'create'])->name('lotes.create');
+    Route::post('/lotes',                 [LoteController::class, 'store'])->name('lotes.store');
+    Route::get('/lotes/{lote}',           [LoteController::class, 'show'])->name('lotes.show');
+    Route::get('/lotes/{lote}/editar',    [LoteController::class, 'edit'])->name('lotes.edit');
+    Route::patch('/lotes/{lote}',         [LoteController::class, 'update'])->name('lotes.update');
+    Route::delete('/lotes/{lote}',        [LoteController::class, 'destroy'])->name('lotes.destroy');
 
     Route::get('/movimientos',     [MovimientoController::class, 'index'])->name('movimientos.index');
 
