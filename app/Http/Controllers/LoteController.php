@@ -89,10 +89,32 @@ class LoteController extends Controller
             ->with('flash', 'Lote registrado. Imprime las etiquetas y pégalas a las cajas.');
     }
 
-    /** Detalle del lote + previsualización de etiqueta para imprimir. */
+    /** Detalle del lote + previsualización de etiqueta + historial de movimientos. */
     public function show(Lote $lote): View
     {
         $lote->load('producto.textura', 'producto.ralCatalogo', 'recepcionadoPor');
-        return view('lotes.show', compact('lote'));
+
+        $movimientos = DB::table('movimientos as m')
+            ->leftJoin('usuarios', 'usuarios.id', '=', 'm.usuario_id')
+            ->leftJoin('motivos_ajuste as ma', 'ma.id', '=', 'm.motivo_ajuste_id')
+            ->where('m.lote_id', $lote->id)
+            ->orderBy('m.id', 'asc') // cronológico ASC: recepción primero, último al final
+            ->select(
+                'm.id',
+                'm.created_at',
+                'm.tipo',
+                'm.peso_kg',
+                'm.peso_manual',
+                'm.anomalia',
+                'm.tipo_anomalia',
+                'm.nota_texto',
+                'usuarios.nombre as usuario_nombre',
+                'usuarios.rol as usuario_rol',
+                'ma.descripcion as motivo_descripcion',
+                'ma.signo as motivo_signo',
+            )
+            ->get();
+
+        return view('lotes.show', compact('lote', 'movimientos'));
     }
 }
