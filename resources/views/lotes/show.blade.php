@@ -66,33 +66,65 @@
 
     <!-- Etiqueta para imprimir / recortar -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <h3 class="font-semibold text-slate-800 mb-2">Etiqueta a imprimir</h3>
-      <p class="text-xs text-slate-500 mb-4">Necesitas <span class="font-bold">{{ $lote->cantidad_cajas * 2 }}</span> etiquetas (2 por caja)</p>
+      <h3 class="font-semibold text-slate-800 mb-2">Etiquetas a imprimir</h3>
+      <p class="text-xs text-slate-500 mb-4">
+        Por defecto <span class="font-bold">{{ $lote->cantidad_cajas * 3 }}</span> etiquetas
+        ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × 3) en hoja Avery 5160.
+      </p>
 
+      {{-- Preview de UNA etiqueta (referencial) --}}
       <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 mb-4">
-        <div class="border-2 border-slate-800 rounded p-3 bg-slate-50">
+        <div class="border-2 border-slate-800 rounded p-2 bg-slate-50" style="aspect-ratio: 2.625 / 1;">
           <div class="flex justify-between items-start">
-            <div class="text-[10px] font-bold text-slate-500 tracking-widest">SHADOW</div>
-            <div class="text-[10px] text-slate-400">50×30mm</div>
+            <div class="text-[8px] font-bold text-slate-500 tracking-widest">SHADOW</div>
+            <div class="text-[8px] text-slate-400">66.7×25.4mm</div>
           </div>
-          <p class="font-bold text-slate-900 mt-1 leading-tight">{{ $lote->producto->ral }}</p>
-          <p class="text-xs text-slate-700">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</p>
-          <p class="text-xs text-slate-600 mt-2">Recep. {{ $lote->fecha_recepcion->format('Y-m-d') }}</p>
-          @if ($lote->fecha_vencimiento)
-            <p class="text-xs text-slate-600">Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</p>
-          @endif
-          <div class="mt-2 h-7 bg-black"
+          <p class="font-bold text-slate-900 mt-0.5 text-sm leading-tight">{{ $lote->producto->ral }}</p>
+          <p class="text-[10px] text-slate-700 leading-tight">{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%</p>
+          <p class="text-[9px] text-slate-600 mt-0.5">Recep. {{ $lote->fecha_recepcion->format('Y-m-d') }}@if ($lote->fecha_vencimiento) · Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }} @endif</p>
+          <div class="mt-1 h-3 bg-black"
                style="background-image: repeating-linear-gradient(90deg, black 0, black 1px, white 1px, white 3px);"></div>
-          <p class="text-center text-[10px] mt-0.5 font-mono font-bold">{{ $lote->codigo_barcode }}</p>
+          <p class="text-center text-[8px] mt-0 font-mono font-bold">{{ $lote->codigo_barcode }}</p>
         </div>
       </div>
 
-      <button onclick="window.print()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg font-semibold">
-        Imprimir etiquetas
-      </button>
-      <p class="text-[11px] text-slate-400 text-center mt-2">
-        (En esta v0 imprime sin formato; soporte de impresora térmica viene después)
-      </p>
+      {{-- Form de generación del PDF --}}
+      <form method="GET" action="{{ route('lotes.etiquetas', $lote) }}" class="space-y-3">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            ¿Cuántas etiquetas?
+          </label>
+          <input type="number" name="cantidad" min="1" max="300"
+                 value="{{ $lote->cantidad_cajas * 3 }}"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg tabular-nums">
+        </div>
+
+        <div>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" id="hoja_parcial" onchange="document.getElementById('desde_fila_wrap').style.display = this.checked ? 'block' : 'none'">
+            La hoja está parcialmente usada
+          </label>
+        </div>
+
+        <div id="desde_fila_wrap" style="display:none">
+          <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            Empezar en la fila #
+          </label>
+          <select name="desde_fila" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+            @for ($i = 1; $i <= 10; $i++)
+              <option value="{{ $i }}">Fila {{ $i }} {{ $i === 1 ? '(hoja completa nueva)' : '' }}</option>
+            @endfor
+          </select>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Mira la hoja: la primera fila vacía es donde empieza. La hoja tiene 10 filas, cada fila lleva 3 etiquetas.
+          </p>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg font-semibold">
+          Generar PDF de etiquetas
+        </button>
+      </form>
     </div>
   </div>
 

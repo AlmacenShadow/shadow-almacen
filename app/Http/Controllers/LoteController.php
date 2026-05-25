@@ -182,6 +182,72 @@ class LoteController extends Controller
     }
 
     /**
+     * Genera un PDF con las etiquetas del lote en formato Avery 5160
+     * (3 columnas x 10 filas en hoja carta vertical).
+     *
+     * Parámetros de query:
+     *   - cantidad   (int, opcional): total de etiquetas a imprimir.
+     *                Default: cantidad_cajas * 3.
+     *   - desde_fila (int 1-10, opcional): solo aplica a la primera hoja.
+     *                Si la hoja física tiene las primeras N-1 filas ya usadas,
+     *                empezamos a pintar en la fila N. Default: 1.
+     */
+    public function etiquetasPdf(Request $request, Lote $lote)
+    {
+        $this->autorizar();
+
+        $defaultCantidad = $lote->cantidad_cajas * 3;
+        $params = $request->validate([
+            'cantidad'   => ['nullable', 'integer', 'min:1', 'max:300'],
+            'desde_fila' => ['nullable', 'integer', 'min:1', 'max:10'],
+        ]);
+
+        $cantidad   = $params['cantidad']   ?? $defaultCantidad;
+        $desdeFila  = $params['desde_fila'] ?? 1;
+
+        $lote->load('producto.textura');
+
+        // Construimos las posiciones (offset_top, offset_left, en mm) de cada
+        // etiqueta en la página. Cada hoja: 3 cols x 10 rows. Primera hoja
+        // empieza en la fila $desdeFila; las siguientes en fila 1.
+        $hojas       = [];
+        $pintadas    = 0;
+        $primeraHoja = true;
+
+        while ($pintadas < $cantidad) {
+            $startRow = $primeraHoja ? $desdeFila : 1;
+            $hojaActual = [];
+            for ($row = $startRow; $row <= 10 && $pintadas < $cantidad; $row++) {
+                for ($col = 1; $col <= 3 && $pintadas < $cantidad; $col++) {
+                    $hojaActual[] = ['row' => $row, 'col' => $col];
+                    $pintadas++;
+                }
+            }
+            $hojas[] = $hojaActual;
+            $primeraHoja = false;
+        }
+
+        // Barcode escaneable (Code 128). dompdf prefiere PNG embebido vía data URI.
+        // getBarcodePNG retorna directamente la cadena base64 lista para data URI.
+        $barcodeBase64 = (new \Milon\Barcode\DNS1D())->getBarcodePNG(
+            $lote->codigo_barcode,
+            'C128',
+            2,     // width factor
+            60,    // height (px)
+            [0, 0, 0]
+        );
+        $barcodeDataUri = 'data:image/png;base64,' . $barcodeBase64;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('lotes.etiquetas_pdf', [
+            'lote'           => $lote,
+            'hojas'          => $hojas,
+            'barcodeDataUri' => $barcodeDataUri,
+        ])->setPaper('letter', 'portrait');
+
+        return $pdf->stream("etiquetas-{$lote->codigo_barcode}.pdf");
+    }
+
+    /**
      * Solo permite borrar si el lote NO tiene movimientos asociados.
      * Si los tiene, hay que corregir con ajustes en lugar de borrar
      * para no romper el historial de auditoría.
