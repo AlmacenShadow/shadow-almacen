@@ -188,13 +188,25 @@ class TabletController extends Controller
             $tipoAnomal  = 'fifo_override';
         }
 
-        // Anomalía 2: en un retorno devolvió más peso del que había en stock antes
-        // (no bloqueamos, solo dejamos la marca de "algo raro")
-        if ($datos['tipo'] === 'retorno' && $datos['peso_kg'] > $lote->stock_kg + 0.01) {
-            // peso devuelto > stock teórico antes del retorno: caso raro pero posible
-            // (ej. cambio de envase). Aceptamos según la regla v1 pero marcamos.
-            $anomalia    = true;
-            $tipoAnomal  = $tipoAnomal ?? 'retorno_excede_stock';
+        // Anomalía 2: devolvió más peso del que se llevó. No bloqueamos, solo marcamos.
+        // Las cajas no tienen identidad propia, así que emparejamos el retorno con la
+        // última salida del mismo lote y pintor: es lo más cerca que podemos estar del
+        // ciclo real. Comparar contra el stock del lote NO sirve: la salida lo deja en
+        // cero por el modelo "salida = consumido", y todo retorno parecería anómalo.
+        if ($datos['tipo'] === 'retorno') {
+            $ultimaSalida = Movimiento::where('lote_id', $lote->id)
+                ->where('usuario_id', $usuario->id)
+                ->where('tipo', 'salida')
+                ->latest('id')
+                ->first();
+
+            if (! $ultimaSalida) {
+                $anomalia   = true;
+                $tipoAnomal = $tipoAnomal ?? 'retorno_sin_salida';
+            } elseif ($datos['peso_kg'] > $ultimaSalida->peso_kg + 0.01) {
+                $anomalia   = true;
+                $tipoAnomal = $tipoAnomal ?? 'retorno_excede_salida';
+            }
         }
 
         $mov = Movimiento::create([
