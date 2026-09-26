@@ -96,9 +96,7 @@
               </td>
               <td class="px-4 py-3">
                 <div class="font-mono font-semibold">{{ $p->ral }}</div>
-                <div class="text-xs text-slate-500">{{ $p->textura ?? '—' }} · {{ $p->brillo_pct }}%
-                  @if ($p->nombre_interno) · {{ $p->nombre_interno }} @endif
-                </div>
+                <div class="text-xs text-slate-500">{{ $p->textura ?? '—' }} · {{ $p->brillo_pct }}%</div>
               </td>
               <td class="px-4 py-3">
                 @if ($p->nivel === 'critico')
@@ -162,9 +160,7 @@
               </td>
               <td class="px-4 py-3">
                 <div class="font-mono font-semibold">{{ $r->ral }}</div>
-                <div class="text-xs text-slate-500">{{ $r->textura ?? '—' }} · {{ $r->brillo_pct }}%
-                  @if ($r->nombre_interno) · {{ $r->nombre_interno }} @endif
-                </div>
+                <div class="text-xs text-slate-500">{{ $r->textura ?? '—' }} · {{ $r->brillo_pct }}%</div>
               </td>
               <td class="px-4 py-3 text-right tabular-nums text-red-700">{{ number_format($r->kg_salidas, 3) }}</td>
               <td class="px-4 py-3 text-right tabular-nums text-emerald-700">{{ number_format($r->kg_retornos, 3) }}</td>

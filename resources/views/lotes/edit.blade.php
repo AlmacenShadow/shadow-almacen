@@ -39,13 +39,12 @@
           <select name="producto_id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg">
             @foreach ($productos as $p)
               <option value="{{ $p->id }}" @selected(old('producto_id', $lote->producto_id) == $p->id)>
-                {{ $p->descripcion_corta }}
-                @if($p->nombre_interno) — {{ $p->nombre_interno }} @endif
+                {{ $p->descripcion_completa }}
               </option>
             @endforeach
           </select>
         @else
-          <input type="text" value="{{ $lote->producto->descripcion_corta }}@if($lote->producto->nombre_interno) — {{ $lote->producto->nombre_interno }} @endif" disabled
+          <input type="text" value="{{ $lote->producto->descripcion_completa }}" disabled
                  class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed">
         @endif
       </div>

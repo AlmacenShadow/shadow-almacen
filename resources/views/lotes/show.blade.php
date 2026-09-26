@@ -11,7 +11,6 @@
         <h2 class="text-2xl font-bold text-slate-900">{{ $lote->codigo_barcode }}</h2>
         <p class="text-sm text-slate-500">
           {{ $lote->producto->descripcion_corta }}
-          @if ($lote->producto->nombre_interno) — {{ $lote->producto->nombre_interno }} @endif
           @if ($lote->producto->nombre_ral_oficial)
             <span class="text-slate-400">· {{ $lote->producto->nombre_ral_oficial }}</span>
           @endif

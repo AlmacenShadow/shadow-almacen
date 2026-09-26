@@ -60,14 +60,13 @@ class ReporteController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
-                'productos.nombre_interno',
                 'productos.hex_override',
                 'ral_catalogo.hex as ral_hex',
                 DB::raw("SUM(CASE WHEN m.tipo='salida'  THEN m.peso_kg ELSE 0 END) as kg_salidas"),
                 DB::raw("SUM(CASE WHEN m.tipo='retorno' THEN m.peso_kg ELSE 0 END) as kg_retornos"),
                 DB::raw("COUNT(*) as movimientos_count"),
             )
-            ->groupBy('productos.id', 'productos.ral', 'texturas.nombre', 'productos.brillo_pct', 'productos.nombre_interno', 'productos.hex_override', 'ral_catalogo.hex')
+            ->groupBy('productos.id', 'productos.ral', 'texturas.nombre', 'productos.brillo_pct', 'productos.hex_override', 'ral_catalogo.hex')
             ->orderByDesc(DB::raw("SUM(CASE WHEN m.tipo='salida' THEN m.peso_kg ELSE 0 END) - SUM(CASE WHEN m.tipo='retorno' THEN m.peso_kg ELSE 0 END)"))
             ->get()
             ->map(function ($r) {
@@ -111,7 +110,6 @@ class ReporteController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
-                'productos.nombre_interno',
                 'productos.stock_minimo_kg',
                 'productos.stock_critico_kg',
                 'productos.hex_override',
@@ -158,13 +156,12 @@ class ReporteController extends Controller
 
             switch ($seccion) {
                 case 'stock-bajo':
-                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Nombre interno', 'Nivel', 'Stock actual (kg)', 'Stock minimo (kg)', 'Stock critico (kg)', 'Deficit (kg)']);
+                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Nivel', 'Stock actual (kg)', 'Stock minimo (kg)', 'Stock critico (kg)', 'Deficit (kg)']);
                     foreach ($data['stockBajo'] as $r) {
                         fputcsv($out, [
                             $r->ral,
                             $r->textura,
                             $r->brillo_pct,
-                            $r->nombre_interno,
                             strtoupper($r->nivel),
                             number_format((float) $r->stock_kg, 3, '.', ''),
                             number_format((float) $r->stock_minimo_kg, 3, '.', ''),
@@ -190,13 +187,12 @@ class ReporteController extends Controller
 
                 case 'productos':
                 default:
-                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Nombre interno', 'Salidas (kg)', 'Retornos (kg)', 'Consumo neto (kg)', 'Movimientos']);
+                    fputcsv($out, ['RAL', 'Textura', 'Brillo %', 'Salidas (kg)', 'Retornos (kg)', 'Consumo neto (kg)', 'Movimientos']);
                     foreach ($data['porProducto'] as $r) {
                         fputcsv($out, [
                             $r->ral,
                             $r->textura,
                             $r->brillo_pct,
-                            $r->nombre_interno,
                             number_format((float) $r->kg_salidas, 3, '.', ''),
                             number_format((float) $r->kg_retornos, 3, '.', ''),
                             number_format((float) $r->kg_netos, 3, '.', ''),

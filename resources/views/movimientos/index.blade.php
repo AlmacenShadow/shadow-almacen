@@ -107,9 +107,6 @@
                    class="font-mono text-amber-600 hover:underline">{{ $m->lote_codigo }}</a>
                 <div class="text-xs text-slate-500">
                   {{ $m->ral }} · {{ $m->textura }} · {{ $m->brillo_pct }}%
-                  @if ($m->nombre_interno)
-                    · <span class="text-slate-400">{{ $m->nombre_interno }}</span>
-                  @endif
                 </div>
               </td>
               <td class="px-5 py-3 text-right whitespace-nowrap">

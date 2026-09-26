@@ -39,7 +39,6 @@ class LoteController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
-                'productos.nombre_interno',
                 'productos.hex_override',
                 'ral_catalogo.hex as ral_hex',
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_kg'),
@@ -58,7 +57,8 @@ class LoteController extends Controller
     /** Formulario de recepción. */
     public function create(): View
     {
-        $productos = Producto::where('activo', true)
+        $productos = Producto::with('textura', 'ralCatalogo')
+            ->where('activo', true)
             ->orderBy('ral')
             ->get();
 
@@ -139,7 +139,7 @@ class LoteController extends Controller
     {
         $this->autorizar();
 
-        $productos = Producto::where('activo', true)->orderBy('ral')->get();
+        $productos = Producto::with('textura', 'ralCatalogo')->where('activo', true)->orderBy('ral')->get();
         $cantMovimientos = $lote->movimientos()->count();
         $sinMovimientos = $cantMovimientos === 0;
 

@@ -149,7 +149,6 @@ class ProductoController extends Controller
             'ral'             => ['required', 'string', 'max:16'],
             'textura_id'      => ['required', 'integer', Rule::exists('texturas', 'id')->where('activo', true)],
             'brillo_pct'      => ['required', 'integer', 'min:0', 'max:100'],
-            'nombre_interno'  => ['nullable', 'string', 'max:120'],
             'hex_override'    => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'stock_minimo_kg' => ['required', 'numeric', 'min:0'],
             'stock_critico_kg'=> ['required', 'numeric', 'min:0'],

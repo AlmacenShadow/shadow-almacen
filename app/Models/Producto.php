@@ -17,7 +17,6 @@ class Producto extends Model
         'ral',
         'textura_id',
         'brillo_pct',
-        'nombre_interno',
         'hex_override',
         'stock_minimo_kg',
         'stock_critico_kg',
@@ -83,5 +82,18 @@ class Producto extends Model
     {
         $textura = $this->textura?->nombre ?? '?';
         return "{$this->ral} · {$textura} · {$this->brillo_pct}%";
+    }
+
+    /** Como descripcion_corta pero con el nombre oficial del K7 intercalado. */
+    public function getDescripcionCompletaAttribute(): string
+    {
+        $partes = array_filter([
+            $this->ral,
+            $this->nombre_ral_oficial,
+            $this->textura?->nombre ?? '?',
+            "{$this->brillo_pct}%",
+        ]);
+
+        return implode(' · ', $partes);
     }
 }

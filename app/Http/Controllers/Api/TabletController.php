@@ -35,13 +35,15 @@ class TabletController extends Controller
 
         $productos = DB::table('productos')
             ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
+            ->leftJoin('ral_catalogo', 'ral_catalogo.codigo', '=', 'productos.ral')
             ->where('productos.activo', true)
             ->select(
                 'productos.id',
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
-                'productos.nombre_interno'
+                DB::raw("COALESCE(NULLIF(productos.hex_override, ''), ral_catalogo.hex, '#cbd5e1') as hex"),
+                DB::raw('ral_catalogo.nombre_oficial as nombre_ral_oficial')
             )
             ->orderBy('productos.ral')
             ->get();
@@ -51,6 +53,7 @@ class TabletController extends Controller
         $lotes = DB::table('lotes')
             ->join('productos', 'productos.id', '=', 'lotes.producto_id')
             ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
+            ->leftJoin('ral_catalogo', 'ral_catalogo.codigo', '=', 'productos.ral')
             ->leftJoin('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
             ->select(
                 'lotes.id',
@@ -62,7 +65,8 @@ class TabletController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
-                'productos.nombre_interno',
+                DB::raw("COALESCE(NULLIF(productos.hex_override, ''), ral_catalogo.hex, '#cbd5e1') as hex"),
+                DB::raw('ral_catalogo.nombre_oficial as nombre_ral_oficial'),
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_actual_kg')
             )
             ->orderBy('lotes.fecha_recepcion')
@@ -132,10 +136,11 @@ class TabletController extends Controller
                 'stock_actual_kg'             => (float) $lote->stock_kg,
             ],
             'producto' => [
-                'ral'            => $lote->producto->ral,
-                'textura'        => $lote->producto->textura?->nombre,
-                'brillo_pct'     => $lote->producto->brillo_pct,
-                'nombre_interno' => $lote->producto->nombre_interno,
+                'ral'                => $lote->producto->ral,
+                'textura'            => $lote->producto->textura?->nombre,
+                'brillo_pct'         => $lote->producto->brillo_pct,
+                'hex'                => $lote->producto->hex,
+                'nombre_ral_oficial' => $lote->producto->nombre_ral_oficial,
             ],
             // Si no es null, la tablet debe avisar "hay un lote anterior, usa ése primero"
             'aviso_fifo' => $loteAnterior ? [

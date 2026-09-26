@@ -4,7 +4,7 @@
 @section('content')
   <div class="mb-5">
     <h2 class="text-2xl font-bold text-slate-900">Nueva recepción</h2>
-    <p class="text-sm text-slate-500">Un lote es un producto + fecha de recepción. Se generan {{ '$n' }} etiquetas (2 por caja).</p>
+    <p class="text-sm text-slate-500">Un lote es un producto + fecha de recepción. Se generan 3 etiquetas por caja.</p>
   </div>
 
   @if ($errors->any())
@@ -25,8 +25,7 @@
           <option value="">— elegir —</option>
           @foreach ($productos as $p)
             <option value="{{ $p->id }}" @selected(old('producto_id') == $p->id)>
-              {{ $p->descripcion_corta }}
-              @if($p->nombre_interno) — {{ $p->nombre_interno }} @endif
+              {{ $p->descripcion_completa }}
             </option>
           @endforeach
         </select>

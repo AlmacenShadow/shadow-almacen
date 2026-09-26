@@ -16,7 +16,6 @@
   $ralActual          = old('ral', $isEdit ? $producto->ral : '');
   $texturaActual      = old('textura_id', $isEdit ? $producto->textura_id : '');
   $brilloActual       = old('brillo_pct', $isEdit ? $producto->brillo_pct : 30);
-  $nombreInternoAct   = old('nombre_interno', $isEdit ? $producto->nombre_interno : '');
   $hexOverrideAct     = old('hex_override', $isEdit ? $producto->hex_override : '');
   $stockMinAct        = old('stock_minimo_kg', $isEdit ? $producto->stock_minimo_kg : 50);
   $stockCritAct       = old('stock_critico_kg', $isEdit ? $producto->stock_critico_kg : 20);
@@ -75,14 +74,6 @@
         <input type="number" name="brillo_pct" id="brillo_pct" value="{{ $brilloActual }}" required min="0" max="100"
                class="w-full px-3 py-2 border border-slate-300 rounded-lg tabular-nums">
       </div>
-    </div>
-
-    {{-- Nombre interno --}}
-    <div>
-      <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Nombre interno (opcional)</label>
-      <input type="text" name="nombre_interno" value="{{ $nombreInternoAct }}" maxlength="120"
-             class="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="Negro mate texturizado">
-      <p class="text-xs text-slate-400 mt-1">Alias humano para identificarlo más fácil que por el RAL.</p>
     </div>
 
     {{-- Hex override --}}

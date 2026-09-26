@@ -65,7 +65,6 @@ class DemoDataSeeder extends Seeder
             DB::table('productos')->updateOrInsert(
                 ['ral' => 'RAL9005', 'textura_id' => $mateId, 'brillo_pct' => 30],
                 [
-                    'nombre_interno'   => 'Negro mate',
                     'stock_minimo_kg'  => 50,
                     'stock_critico_kg' => 20,
                     'activo'           => true,
@@ -77,7 +76,6 @@ class DemoDataSeeder extends Seeder
             DB::table('productos')->updateOrInsert(
                 ['ral' => 'RAL9016', 'textura_id' => $texturizadoId, 'brillo_pct' => 20],
                 [
-                    'nombre_interno'   => 'Blanco texturizado',
                     'stock_minimo_kg'  => 40,
                     'stock_critico_kg' => 15,
                     'activo'           => true,

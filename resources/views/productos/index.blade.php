@@ -8,7 +8,7 @@
       <p class="text-sm text-slate-500">Cada combinación de RAL + textura + brillo es un producto distinto.</p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="{{ route('catalogo-ral.index') }}"
+      <a href="{{ route('catalogo-ral.index') }}" target="_blank"
          class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 rounded border border-slate-300 bg-white">
         Catálogo K7
       </a>
@@ -43,7 +43,6 @@
             <th class="text-left px-4 py-3">RAL</th>
             <th class="text-left px-4 py-3">Textura</th>
             <th class="text-right px-4 py-3">Brillo</th>
-            <th class="text-left px-4 py-3">Nombre interno</th>
             <th class="text-right px-4 py-3">Stock</th>
             <th class="text-right px-4 py-3">Mín / Crítico</th>
             <th class="text-center px-4 py-3">Lotes</th>
@@ -74,7 +73,6 @@
               </td>
               <td class="px-4 py-3">{{ $p->textura_nombre ?? '—' }}</td>
               <td class="px-4 py-3 text-right tabular-nums">{{ $p->brillo_pct }}%</td>
-              <td class="px-4 py-3 text-slate-600">{{ $p->nombre_interno ?: '—' }}</td>
               <td class="px-4 py-3 text-right tabular-nums {{ $clase }}">{{ number_format($stock, 3) }} kg</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500 text-xs">
                 {{ number_format($p->stock_minimo_kg, 0) }} / {{ number_format($p->stock_critico_kg, 0) }}
