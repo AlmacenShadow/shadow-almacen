@@ -124,6 +124,8 @@ class LoteController extends Controller
                 'ma.descripcion as motivo_descripcion',
                 'ma.signo as motivo_signo',
                 'corr.id as corregido_por_id',
+                'corr.tipo as correccion_tipo',
+                'corr.peso_kg as correccion_peso',
             )
             ->get();
 

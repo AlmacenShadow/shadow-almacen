@@ -81,13 +81,25 @@
                 <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $tipoBadge[0] }}">
                   {{ $tipoBadge[1] }}
                 </span>
+                @php
+                  $esAnulacion = $m->corrige_movimiento_id
+                    && $m->tipo === 'ajuste'
+                    && abs((float) $m->peso_kg) < 0.0005;
+                  $fueAnulado = $m->corregido_por_id
+                    && $m->correccion_tipo === 'ajuste'
+                    && abs((float) $m->correccion_peso) < 0.0005;
+                @endphp
                 @if ($m->corrige_movimiento_id)
                   <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-800"
-                        title="Corrige al movimiento #{{ $m->corrige_movimiento_id }}">↺ corrección</span>
+                        title="{{ $esAnulacion
+                          ? "Anula el movimiento #{$m->corrige_movimiento_id}"
+                          : "Reemplaza al movimiento #{$m->corrige_movimiento_id} con el peso verdadero" }}">{{ $esAnulacion ? '⊘ anulación' : '↺ corrección' }}</span>
                 @endif
                 @if ($m->corregido_por_id)
                   <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 text-slate-700"
-                        title="Anulado por el ajuste #{{ $m->corregido_por_id }}">corregido</span>
+                        title="{{ $fueAnulado
+                          ? "Anulado por el registro #{$m->corregido_por_id}: ya no cuenta"
+                          : "Reemplazado por el registro #{$m->corregido_por_id}: ya no cuenta" }}">{{ $fueAnulado ? 'anulado' : 'reemplazado' }}</span>
                 @endif
                 @if ($m->anomalia)
                   <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-900"

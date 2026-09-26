@@ -62,6 +62,8 @@ class MovimientoController extends Controller
                 'ma.signo as motivo_signo',
                 'orig.id as original_id',
                 'corr.id as corregido_por_id',
+                'corr.tipo as correccion_tipo',
+                'corr.peso_kg as correccion_peso',
             )
             ->orderByDesc('m.id');
 
@@ -91,75 +93,91 @@ class MovimientoController extends Controller
     }
 
     /**
-     * Persiste el movimiento compensatorio.
+     * Persiste la corrección. Dos modos, ambos append-only: el original nunca
+     * se edita, se le cuelga un hijo vía corrige_movimiento_id y deja de contar.
      *
-     * Reglas:
-     * - El compensatorio es un movimiento NUEVO (no edita el original)
-     * - tipo = 'ajuste' (es una operación administrativa, no un flujo de pintor)
-     * - peso_kg = mismo del original
-     * - motivo_ajuste_id apunta al motivo CORRECCION_REGISTRO o _NEG según el signo necesario
-     * - corrige_movimiento_id = id del original
-     * - nota_texto OBLIGATORIA explicando
+     * - corregir: el hijo es del MISMO tipo que el original y carga el peso
+     *   verdadero. Conserva el usuario_id del original para que el consumo se
+     *   le siga atribuyendo al pintor que hizo la operación, no a quien corrige.
+     * - anular:   el hijo es un ajuste de 0 kg con motivo ANULACION. No aporta
+     *   nada, y el original queda neutralizado por la misma regla.
      */
     public function corregirStore(Request $request, Movimiento $movimiento): RedirectResponse
     {
         $this->autorizar();
 
-        // No permitir corregir un movimiento ya corregido
+        // Un solo hijo por movimiento: dos correcciones del mismo original
+        // contarían las dos y duplicarían el efecto.
         if (Movimiento::where('corrige_movimiento_id', $movimiento->id)->exists()) {
             return back()->withErrors([
-                'nota_texto' => 'Este movimiento ya tiene una corrección registrada.',
-            ]);
-        }
-
-        // No permitir corregir una corrección (evita cascadas)
-        if ($movimiento->corrige_movimiento_id !== null) {
-            return back()->withErrors([
-                'nota_texto' => 'Este movimiento ya es una corrección. Si necesitas anular la corrección, pídelo al admin.',
+                'nota_texto' => 'Este movimiento ya tiene una corrección registrada. Corrige esa corrección en vez de esta.',
             ]);
         }
 
         $data = $request->validate([
-            'nota_texto' => ['required', 'string', 'min:10', 'max:500'],
+            'accion'        => ['required', 'in:corregir,anular'],
+            'peso_correcto' => ['required_if:accion,corregir', 'nullable', 'numeric', 'min:0.001', 'max:99999'],
+            'nota_texto'    => ['required', 'string', 'min:10', 'max:400'],
         ], [
-            'nota_texto.required' => 'Tienes que explicar por qué se está corrigiendo.',
-            'nota_texto.min'      => 'La explicación es muy corta (mínimo 10 caracteres).',
+            'accion.required'         => 'Elige si vas a corregir el peso o anular el movimiento.',
+            'peso_correcto.required_if' => 'Escribe el peso verdadero.',
+            'peso_correcto.min'       => 'El peso verdadero tiene que ser mayor a cero. Si el movimiento no debió existir, usa anular.',
+            'nota_texto.required'     => 'Tienes que explicar por qué se está corrigiendo.',
+            'nota_texto.min'          => 'La explicación es muy corta (mínimo 10 caracteres).',
         ]);
 
-        // Determinar qué motivo usar según el efecto que tenía el original
-        // Original suma stock (retorno o ajuste +1) → compensar restando → signo -1
-        // Original resta stock (salida o ajuste -1) → compensar sumando → signo +1
-        $efectoOriginal = match ($movimiento->tipo) {
-            'salida'  => -1,
-            'retorno' => +1,
-            'ajuste'  => (int) optional(DB::table('motivos_ajuste')->find($movimiento->motivo_ajuste_id))->signo ?: -1,
-            default   => -1,
-        };
-        $codigoMotivo = $efectoOriginal === -1 ? 'CORRECCION_REGISTRO' : 'CORRECCION_REGISTRO_NEG';
-        $motivo = DB::table('motivos_ajuste')->where('codigo', $codigoMotivo)->first();
+        $quien = Auth::user()?->nombre ?? 'panel';
+        $nota  = "[{$data['accion']} por {$quien}] " . $data['nota_texto'];
 
-        if (! $motivo) {
-            return back()->withErrors([
-                'nota_texto' => "Falta el motivo de ajuste {$codigoMotivo} en la base. Avisar al admin.",
+        if ($data['accion'] === 'anular') {
+            $motivo = DB::table('motivos_ajuste')->where('codigo', 'ANULACION')->first();
+            if (! $motivo) {
+                return back()->withErrors([
+                    'nota_texto' => 'Falta el motivo de ajuste ANULACION en la base. Avisar al admin.',
+                ]);
+            }
+
+            $hijo = Movimiento::create([
+                'lote_id'               => $movimiento->lote_id,
+                'usuario_id'            => Auth::id(),
+                'tipo'                  => 'ajuste',
+                'peso_kg'               => 0,
+                'peso_manual'           => true,
+                'motivo_ajuste_id'      => $motivo->id,
+                'corrige_movimiento_id' => $movimiento->id,
+                'nota_texto'            => $nota,
+                'sync_uuid'             => (string) Str::uuid(),
+                'device_id'             => 'panel-web',
             ]);
-        }
 
-        $correccion = Movimiento::create([
-            'lote_id'               => $movimiento->lote_id,
-            'usuario_id'            => Auth::id(),
-            'tipo'                  => 'ajuste',
-            'peso_kg'               => $movimiento->peso_kg,
-            'peso_manual'           => true,
-            'motivo_ajuste_id'      => $motivo->id,
-            'corrige_movimiento_id' => $movimiento->id,
-            'nota_texto'            => $data['nota_texto'],
-            'sync_uuid'             => (string) Str::uuid(),
-            'device_id'             => 'panel-web',
-        ]);
+            $flash = "Movimiento #{$movimiento->id} anulado (registro #{$hijo->id}). Ya no cuenta para el stock.";
+        } else {
+            if (abs((float) $data['peso_correcto'] - (float) $movimiento->peso_kg) < 0.0005) {
+                return back()->withErrors([
+                    'peso_correcto' => 'Ese es el mismo peso que ya tiene el movimiento. No hay nada que corregir.',
+                ]);
+            }
+
+            $hijo = Movimiento::create([
+                'lote_id'               => $movimiento->lote_id,
+                'usuario_id'            => $movimiento->usuario_id,
+                'tipo'                  => $movimiento->tipo,
+                'peso_kg'               => $data['peso_correcto'],
+                'peso_manual'           => true,
+                'motivo_ajuste_id'      => $movimiento->motivo_ajuste_id,
+                'corrige_movimiento_id' => $movimiento->id,
+                'nota_texto'            => $nota,
+                'sync_uuid'             => (string) Str::uuid(),
+                'device_id'             => 'panel-web',
+            ]);
+
+            $flash = "Corregido: el movimiento #{$movimiento->id} queda reemplazado por #{$hijo->id} "
+                . "con " . number_format((float) $data['peso_correcto'], 3) . " kg.";
+        }
 
         return redirect()
             ->route('lotes.show', $movimiento->lote_id)
-            ->with('flash', "Corrección registrada (movimiento #{$correccion->id}). El stock del lote se actualizó.");
+            ->with('flash', $flash);
     }
 
     /**

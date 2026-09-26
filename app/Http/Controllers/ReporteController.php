@@ -36,16 +36,16 @@ class ReporteController extends Controller
             ? Carbon::parse($request->query('hasta'))->endOfDay()
             : Carbon::today()->endOfDay();
 
-        // Subquery: movimientos "limpios" (sin correcciones)
-        // Usamos un select base que las 3 secciones reutilizan.
+        // Subquery: movimientos que cuentan. Misma regla que v_stock_lote —
+        // un movimiento corregido no cuenta, cuenta el que lo reemplaza. La
+        // corrección SÍ entra (trae el peso verdadero); si la excluyéramos,
+        // corregir un movimiento lo borraría del reporte en lugar de arreglarlo.
         $movsLimpios = DB::table('movimientos as m')
             ->whereBetween('m.created_at', [$desde, $hasta])
-            ->whereNull('m.corrige_movimiento_id') // no es una corrección
-            // y no es un movimiento que haya sido corregido:
-            ->whereNotIn('m.id', function ($q) {
-                $q->select('corrige_movimiento_id')
-                  ->from('movimientos')
-                  ->whereNotNull('corrige_movimiento_id');
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('movimientos as c')
+                  ->whereColumn('c.corrige_movimiento_id', 'm.id');
             });
 
         // === Consumo por producto ===

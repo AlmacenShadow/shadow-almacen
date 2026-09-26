@@ -202,7 +202,20 @@
               'ajuste'  => ((int) ($m->motivo_signo ?? -1)) * (float) $m->peso_kg,
               default   => 0.0,
             };
-            $stockAcumulado += $delta;
+
+            // Un movimiento corregido no cuenta (misma regla que v_stock_lote);
+            // cuenta el que lo reemplaza. Si lo sumáramos, el acumulado no cuadraría.
+            $anulado    = $m->corregido_por_id !== null;
+            $fueAnulado = $anulado
+              && $m->correccion_tipo === 'ajuste'
+              && abs((float) $m->correccion_peso) < 0.0005;
+            $esAnulacion = $m->corrige_movimiento_id
+              && $m->tipo === 'ajuste'
+              && abs((float) $m->peso_kg) < 0.0005;
+
+            if (! $anulado) {
+              $stockAcumulado += $delta;
+            }
 
             $tipoBadge = match ($m->tipo) {
               'salida'  => ['bg-red-100 text-red-800',       '↗ Salida'],
@@ -224,12 +237,16 @@
               @if ($m->corrige_movimiento_id)
                 <a href="#mov-{{ $m->corrige_movimiento_id }}"
                    class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-800 hover:bg-violet-200"
-                   title="Esta corrección anula al movimiento #{{ $m->corrige_movimiento_id }}">↺ corrige #{{ $m->corrige_movimiento_id }}</a>
+                   title="{{ $esAnulacion
+                      ? "Anula el movimiento #{$m->corrige_movimiento_id}"
+                      : "Reemplaza al movimiento #{$m->corrige_movimiento_id} con el peso verdadero" }}">{{ $esAnulacion ? '⊘ anula' : '↺ corrige' }} #{{ $m->corrige_movimiento_id }}</a>
               @endif
-              @if ($m->corregido_por_id)
+              @if ($anulado)
                 <a href="#mov-{{ $m->corregido_por_id }}"
                    class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-slate-200 text-slate-700 hover:bg-slate-300"
-                   title="Anulado por el ajuste #{{ $m->corregido_por_id }}">corregido</a>
+                   title="{{ $fueAnulado
+                      ? "Anulado por el registro #{$m->corregido_por_id}: ya no cuenta"
+                      : "Reemplazado por el registro #{$m->corregido_por_id}: ya no cuenta" }}">{{ $fueAnulado ? 'anulado' : 'reemplazado' }}</a>
               @endif
               @if ($m->anomalia)
                 <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-900"

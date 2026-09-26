@@ -8,6 +8,7 @@ use App\Models\Movimiento;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -224,7 +225,11 @@ class TabletController extends Controller
             'tipo_anomalia'  => $tipoAnomal,
             'sync_uuid'      => $datos['sync_uuid'],
             'device_id'      => $datos['device_id'] ?? null,
-            'device_at'      => $datos['device_at'] ?? null,
+            // La tablet manda toISOString(), que siempre es UTC. Sin convertir,
+            // device_at queda corrido 5 horas contra created_at.
+            'device_at'      => isset($datos['device_at'])
+                ? Carbon::parse($datos['device_at'])->setTimezone(config('app.timezone'))
+                : null,
         ]);
 
         $lote->refresh();
