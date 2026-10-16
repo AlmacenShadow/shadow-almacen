@@ -77,11 +77,24 @@
     .et-info {
       padding-right: 17mm;
     }
+    /* Bloque 1 — producto: RAL + nombre oficial en una linea, textura debajo.
+       El nombre comparte linea base con el RAL; si es largo se recorta contra
+       el ancho de la columna en vez de empujar nada. */
+    .et-titulo {
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+    }
     .et-ral {
       font-size: 13pt;
       font-weight: bold;
-      line-height: 1;
-      margin: 0;
+    }
+    .et-nombre {
+      font-size: 6.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #222;
+      margin-left: 1.5mm;
     }
     .et-textura {
       font-size: 11pt;
@@ -91,23 +104,14 @@
       white-space: nowrap;
       overflow: hidden;
     }
-    .et-nombre {
-      font-size: 6.5pt;
-      font-weight: bold;
-      text-transform: uppercase;
-      color: #222;
-      line-height: 1;
-      margin: 0.4mm 0 0 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    /* Bloque 2 — almacen: lote y fechas. El margen de arriba es el corte
+       visual entre que ES la pintura y de que entrega vino. */
     .et-codigo {
       font-family: "Courier New", monospace;
       font-size: 11pt;
       font-weight: bold;
       line-height: 1;
-      margin: 0.5mm 0 0 0;
+      margin: 2mm 0 0 0;
     }
     /* Fechas compactas: R2605 = recibido mayo 2026, V2609 = vence sep 2026 */
     .et-fechas {
@@ -137,11 +141,13 @@
             <div class="et-pildora" style="background-color: {{ $lote->producto->hex }};"></div>
           </div>
           <div class="et-info">
-            <div class="et-ral">{{ $lote->producto->ral }}</div>
+            <div class="et-titulo">
+              <span class="et-ral">{{ $lote->producto->ral }}</span>
+              @if ($lote->producto->nombre_ral_oficial)
+                <span class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</span>
+              @endif
+            </div>
             <div class="et-textura">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</div>
-            @if ($lote->producto->nombre_ral_oficial)
-              <div class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</div>
-            @endif
             <p class="et-codigo">{{ $lote->codigo_barcode }}</p>
             <div class="et-fechas">{{ $fechas }}</div>
           </div>

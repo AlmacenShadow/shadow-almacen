@@ -83,16 +83,18 @@
         <div class="border-2 border-slate-800 rounded px-2 py-1.5 bg-white flex items-start gap-2"
              style="aspect-ratio: 67 / 25;">
           <div class="flex-1 min-w-0">
-            <p class="font-bold text-slate-900 text-base leading-none">{{ $lote->producto->ral }}</p>
+            {{-- Bloque producto: RAL + nombre en una línea, textura debajo --}}
+            <p class="leading-none truncate">
+              <span class="font-bold text-slate-900 text-base">{{ $lote->producto->ral }}</span>
+              @if ($lote->producto->nombre_ral_oficial)
+                <span class="text-[8px] font-bold uppercase text-slate-800 ml-1">{{ $lote->producto->nombre_ral_oficial }}</span>
+              @endif
+            </p>
             <p class="text-sm text-slate-700 leading-none mt-0.5 truncate">
               [{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]
             </p>
-            @if ($lote->producto->nombre_ral_oficial)
-              <p class="text-[8px] font-bold uppercase text-slate-800 leading-none mt-0.5 truncate">
-                {{ $lote->producto->nombre_ral_oficial }}
-              </p>
-            @endif
-            <p class="text-sm mt-0.5 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
+            {{-- Bloque almacén, separado del de producto --}}
+            <p class="text-sm mt-2 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
             <p class="text-[8px] text-slate-500 leading-none mt-0.5">{{ $fechasEtiqueta }}</p>
           </div>
           {{-- 15mm de QR sobre 67mm de etiqueta = 22% del ancho; la píldora va debajo --}}
