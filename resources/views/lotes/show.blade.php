@@ -84,7 +84,7 @@
              que las proporciones de tipografía y QR sean las del PDF y no las
              del ancho del panel. Sin truncate: si el nombre no cabe baja de
              línea, igual que dompdf. --}}
-        <div class="mx-auto border border-slate-800 bg-white flex items-start overflow-hidden"
+        <div class="mx-auto border border-slate-800 bg-white flex items-center overflow-hidden"
              style="width: 201px; height: 76px; padding: 4.5px 6px; gap: 6px;">
           <div class="shrink-0" style="width: 45px;">
             <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}"

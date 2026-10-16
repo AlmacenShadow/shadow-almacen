@@ -64,12 +64,18 @@
     .hoja:last-child {
       page-break-after: auto;
     }
+    /* El padding-top centra el bloque de texto verticalmente: el peor caso
+       (nombre que baja de linea) mide ~19mm en una etiqueta de ~25.4mm, asi que
+       {{ round(($altoEt - 19) / 2, 1) }}mm arriba lo deja con margen parejo
+       arriba y abajo (~3mm de aire a cada lado). Eso absorbe un ±2% de escala
+       vertical de la impresora sin que el texto toque el troquel. El QR es
+       absolute, asi que este padding solo mueve el texto. */
     .etiqueta {
       position: absolute;
       width: {{ round($anchoEt, 3) }}mm;
       height: {{ round($altoEt, 3) }}mm;
       box-sizing: border-box;
-      padding: 1.5mm {{ round(2 / $escalaH, 3) }}mm;
+      padding-top: {{ round(($altoEt - 19) / 2, 2) }}mm;
       overflow: hidden;
       /* sin borde en produccion; descomentar para debug de alineado */
       /* border: 0.2mm dashed #e11; */
@@ -97,10 +103,12 @@
       border-radius: 1.75mm;
     }
 
-    /* Columna de texto, pegada al borde derecho del QR. El padding-left
-       reserva el ancho del QR mas 2mm de aire. */
+    /* Columna de texto. El QR es absolute en left:2mm y mide 15mm, asi que
+       termina en 17mm; el texto arranca 2mm despues, en 19mm, para dejar aire
+       real entre el QR y el texto. */
     .et-info {
-      padding-left: {{ round(17 / $escalaH, 3) }}mm;
+      padding-left: {{ round(19 / $escalaH, 3) }}mm;
+      padding-right: {{ round(2 / $escalaH, 3) }}mm;
     }
     /* Bloque 1 — producto: RAL + nombre oficial en una linea, textura debajo.
        El nombre comparte linea base con el RAL; si es largo se recorta contra
