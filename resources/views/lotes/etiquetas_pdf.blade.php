@@ -50,68 +50,71 @@
       /* border: 0.2mm dashed #e11; */
     }
 
-    /* QR cuadrado a la derecha. Absolute para que dompdf no lo meta en el flujo
-       vertical y nos deje el alto completo para el bloque de texto. */
-    .et-qr {
+    /* Columna derecha: QR con la pildora de color debajo. Absolute para que
+       dompdf no la meta en el flujo vertical y nos deje el alto completo
+       disponible para el bloque de texto. */
+    .et-marca {
       position: absolute;
-      top: 2.5mm;
+      top: 2mm;
       right: 2mm;
+      width: 15mm;
     }
-    .et-qr img {
-      width: 20mm;
-      height: 20mm;
+    .et-marca img {
+      width: 15mm;
+      height: 15mm;
       display: block;
+    }
+    /* Muestra del color RAL. El fondo va inline porque sale de la BD. */
+    .et-pildora {
+      height: 3.5mm;
+      margin-top: 1.2mm;
+      border: 0.2mm solid #999;
+      border-radius: 1.75mm;
     }
 
-    /* Columna de texto a la izquierda. El padding-right reserva el ancho del QR
-       (20mm) mas 2mm de aire, sobre los 63mm de caja de contenido => 41mm utiles. */
+    /* Columna de texto. El padding-right reserva los 15mm del QR mas 2mm de
+       aire, sobre los 63mm de caja de contenido => 46mm utiles. */
     .et-info {
-      padding-right: 22mm;
-    }
-    .et-shadow {
-      display: block;
-      font-size: 6pt;
-      line-height: 1;
-      letter-spacing: 0.5pt;
-      font-weight: bold;
-      color: #666;
+      padding-right: 17mm;
     }
     .et-ral {
       font-size: 13pt;
       font-weight: bold;
       line-height: 1;
-      margin: 0.3mm 0 0 0;
+      margin: 0;
     }
-    /* Nombre oficial K7 + textura/brillo entre corchetes, en una sola linea */
-    .et-detalle {
-      font-size: 6.5pt;
+    .et-textura {
+      font-size: 11pt;
       color: #333;
-      margin: 0.5mm 0 0 0;
       line-height: 1;
+      margin: 0.4mm 0 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .et-nombre {
+      font-size: 6.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #222;
+      line-height: 1;
+      margin: 0.4mm 0 0 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .et-nombre {
-      font-weight: bold;
-      text-transform: uppercase;
-      color: #222;
-    }
-    .et-textura-inline {
-      color: #555;
-    }
-    .et-fechas {
-      font-size: 6pt;
-      color: #555;
-      line-height: 1.3;
-      margin: 0.8mm 0 0 0;
-    }
     .et-codigo {
       font-family: "Courier New", monospace;
-      font-size: 8pt;
+      font-size: 11pt;
       font-weight: bold;
-      margin: 0.8mm 0 0 0;
       line-height: 1;
+      margin: 0.5mm 0 0 0;
+    }
+    /* Fechas compactas: R2605 = recibido mayo 2026, V2609 = vence sep 2026 */
+    .et-fechas {
+      font-size: 6.5pt;
+      color: #555;
+      line-height: 1;
+      margin: 0.5mm 0 0 0;
     }
   </style>
 </head>
@@ -122,27 +125,25 @@
         @php
           $top  = 14 + ($celda['row'] - 1) * 25;
           $left = 4  + ($celda['col'] - 1) * 71;
+
+          $fechas = 'R' . $lote->fecha_recepcion->format('ym');
+          if ($lote->fecha_vencimiento) {
+              $fechas .= ' / V' . $lote->fecha_vencimiento->format('ym');
+          }
         @endphp
         <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
-          <div class="et-qr">
+          <div class="et-marca">
             <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}">
+            <div class="et-pildora" style="background-color: {{ $lote->producto->hex }};"></div>
           </div>
           <div class="et-info">
-            <span class="et-shadow">SHADOW</span>
             <div class="et-ral">{{ $lote->producto->ral }}</div>
-            <div class="et-detalle">
-              @if ($lote->producto->nombre_ral_oficial)
-                <span class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</span>
-              @endif
-              <span class="et-textura-inline">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</span>
-            </div>
-            <div class="et-fechas">
-              <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
-              @if ($lote->fecha_vencimiento)
-                <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
-              @endif
-            </div>
+            <div class="et-textura">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</div>
+            @if ($lote->producto->nombre_ral_oficial)
+              <div class="et-nombre">{{ $lote->producto->nombre_ral_oficial }}</div>
+            @endif
             <p class="et-codigo">{{ $lote->codigo_barcode }}</p>
+            <div class="et-fechas">{{ $fechas }}</div>
           </div>
         </div>
       @endforeach

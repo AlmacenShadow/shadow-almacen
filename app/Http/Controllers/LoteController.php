@@ -129,7 +129,33 @@ class LoteController extends Controller
             )
             ->get();
 
-        return view('lotes.show', compact('lote', 'movimientos'));
+        return view('lotes.show', [
+            'lote'        => $lote,
+            'movimientos' => $movimientos,
+            'qrDataUri'   => $this->qrDataUri($lote),
+        ]);
+    }
+
+    /**
+     * QR del lote como data URI. Vive acá y no inline en cada sitio para que la
+     * muestra de la pantalla del lote y el PDF real no se desincronicen: si el
+     * nivel de corrección o el tamaño de módulo cambian, cambian en los dos.
+     *
+     * Corrección H (30% de tolerancia a daño) porque las cajas viven en planta
+     * con polvo. Con un payload corto como "LOT-00001" el QR sigue siendo
+     * versión 1 (21x21 módulos) incluso con H.
+     */
+    private function qrDataUri(Lote $lote): string
+    {
+        $b64 = (new \Milon\Barcode\DNS2D())->getBarcodePNG(
+            $lote->codigo_barcode,
+            'QRCODE,H',
+            12,    // px por módulo
+            12,
+            [0, 0, 0]
+        );
+
+        return 'data:image/png;base64,' . $b64;
     }
 
     /**
@@ -229,25 +255,12 @@ class LoteController extends Controller
             $primeraHoja = false;
         }
 
-        // QR escaneable. Nivel de corrección H (30% de tolerancia a daño) porque
-        // las cajas viven en planta con polvo y las etiquetas se rozan. Con un
-        // payload corto como "LOT-00001" el QR sigue siendo versión 1 (21x21
-        // módulos) incluso con H, así que a 20mm impresos queda holgado.
-        // El código que lleva dentro es el mismo codigo_barcode de siempre: la
-        // tablet lo recibe como texto del escáner y detecta el prefijo "LOT-".
-        $qrBase64 = (new \Milon\Barcode\DNS2D())->getBarcodePNG(
-            $lote->codigo_barcode,
-            'QRCODE,H',
-            12,    // px por módulo
-            12,
-            [0, 0, 0]
-        );
-        $qrDataUri = 'data:image/png;base64,' . $qrBase64;
-
+        // El QR lleva dentro el mismo codigo_barcode de siempre: la tablet lo
+        // recibe como texto del escáner y detecta el prefijo "LOT-".
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('lotes.etiquetas_pdf', [
             'lote'      => $lote,
             'hojas'     => $hojas,
-            'qrDataUri' => $qrDataUri,
+            'qrDataUri' => $this->qrDataUri($lote),
         ])->setPaper('letter', 'portrait');
 
         return $pdf->stream("etiquetas-{$lote->codigo_barcode}.pdf");

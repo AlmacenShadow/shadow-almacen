@@ -68,29 +68,40 @@
       <h3 class="font-semibold text-slate-800 mb-2">Etiquetas a imprimir</h3>
       <p class="text-xs text-slate-500 mb-4">
         Por defecto <span class="font-bold">{{ $lote->cantidad_cajas * 3 }}</span> etiquetas
-        ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × 3) en hoja Avery 5160.
+        ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × 3)
+        en hoja carta de 3 × 10, etiquetas de 67 × 25 mm.
       </p>
 
       {{-- Preview de UNA etiqueta (replica el diseño del PDF) --}}
+      @php
+        $fechasEtiqueta = 'R' . $lote->fecha_recepcion->format('ym');
+        if ($lote->fecha_vencimiento) {
+            $fechasEtiqueta .= ' / V' . $lote->fecha_vencimiento->format('ym');
+        }
+      @endphp
       <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 mb-4">
-        <div class="border-2 border-slate-800 rounded px-2 py-1.5 bg-slate-50 relative" style="aspect-ratio: 2.625 / 1;">
-          <div class="text-[8px] font-bold text-slate-500 tracking-widest">SHADOW</div>
-          <div class="absolute top-3 right-2 text-right text-[8px] text-slate-500 leading-tight">
-            <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
-            @if ($lote->fecha_vencimiento)
-              <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
-            @endif
-          </div>
-          <p class="font-bold text-slate-900 mt-0.5 text-sm leading-none">{{ $lote->producto->ral }}</p>
-          <p class="text-[9px] text-slate-700 leading-tight mt-0.5 truncate pr-20">
+        <div class="border-2 border-slate-800 rounded px-2 py-1.5 bg-white flex items-start gap-2"
+             style="aspect-ratio: 67 / 25;">
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-slate-900 text-base leading-none">{{ $lote->producto->ral }}</p>
+            <p class="text-sm text-slate-700 leading-none mt-0.5 truncate">
+              [{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]
+            </p>
             @if ($lote->producto->nombre_ral_oficial)
-              <span class="font-bold uppercase">{{ $lote->producto->nombre_ral_oficial }}</span>
+              <p class="text-[8px] font-bold uppercase text-slate-800 leading-none mt-0.5 truncate">
+                {{ $lote->producto->nombre_ral_oficial }}
+              </p>
             @endif
-            <span class="text-slate-500">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</span>
-          </p>
-          <div class="mt-1 h-3.5 bg-black"
-               style="background-image: repeating-linear-gradient(90deg, black 0, black 1.5px, white 1.5px, white 3px);"></div>
-          <p class="text-center text-[8px] mt-0.5 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
+            <p class="text-sm mt-0.5 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
+            <p class="text-[8px] text-slate-500 leading-none mt-0.5">{{ $fechasEtiqueta }}</p>
+          </div>
+          {{-- 15mm de QR sobre 67mm de etiqueta = 22% del ancho; la píldora va debajo --}}
+          <div class="w-[22%] shrink-0">
+            <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}"
+                 class="w-full aspect-square" style="image-rendering: pixelated;">
+            <div class="mt-1 h-2 rounded-full border border-slate-400"
+                 style="background-color: {{ $lote->producto->hex }};"></div>
+          </div>
         </div>
       </div>
 
