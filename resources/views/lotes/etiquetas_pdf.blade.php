@@ -1,25 +1,50 @@
 <!DOCTYPE html>
+@php
+  /*
+    CALIBRACION — medida el 2026-10-15 sobre la hoja fisica y sobre una
+    impresion al 100%. Hoja Letter (215.9 x 279.4mm), grid 3 cols x 10 rows,
+    etiquetas genericas (NO Avery 5160).
+
+    Se midio, entre el borde de la primera y el de la ultima:
+
+                        en la hoja fisica   en el PDF impreso   diseñado
+      vertical   (f1->f10)   228.5mm             225mm            225mm
+      horizontal (c1->c3)    141.5mm             143.5mm          142mm
+
+    Dos correcciones distintas salen de ahi:
+
+    1) El paso real de las etiquetas no es el que creiamos:
+         vertical   228.5 / 9 intervalos = 25.389mm  (no 25)
+         horizontal 141.5 / 2 intervalos = 70.75mm   (no 71)
+
+    2) La impresora estira ~1.06% SOLO en horizontal: lo diseñado a 142mm
+       salio a 143.5mm, mientras que en vertical 225mm salio exacto. Por eso
+       todas las medidas horizontales se predividen por esa escala (asi salen
+       impresas en su valor real) y las verticales se dejan tal cual.
+
+    Si cambias de impresora hay que volver a medir: imprime la version con
+    bordes al 100% y comprueba que f1->f10 de 228.5mm y c1->c3 de 141.5mm.
+  */
+  $escalaH = 143.5 / 142;          // estiramiento horizontal de la impresora
+
+  $pasoV   = 228.5 / 9;            // 25.389mm
+  $pasoH   = (141.5 / 2) / $escalaH;
+
+  $margenTop  = 14;
+  $margenLeft = 4 / $escalaH;
+
+  $altoEt  = $pasoV;               // filas contiguas: alto = paso
+  $anchoEt = 67 / $escalaH;
+
+  // El QR se predivide tambien, si no la impresora lo saca 1% mas ancho que
+  // alto y deja de ser cuadrado.
+  $qrLado = 15 / $escalaH;
+@endphp
 <html>
 <head>
   <meta charset="UTF-8">
   <title>Etiquetas {{ $lote->codigo_barcode }}</title>
   <style>
-    /*
-      Hoja Letter (8.5" x 11" = 215.9mm x 279.4mm), grid 3 cols x 10 rows.
-      NO son Avery 5160: son etiquetas genericas, medidas por el usuario.
-
-        Horizontal: 4mm + 67mm + 4mm + 67mm + 4mm + 67mm + 4mm
-        Vertical:   14mm + (25mm x 10) + 14mm   (filas contiguas, sin gap)
-
-      Las sumas del usuario dan 217mm y 278mm contra los 215.9 y 279.4 reales,
-      asi que vienen redondeadas. Anclamos en el margen izquierdo (4mm) y el
-      superior (14mm), que son los que definen donde arranca la grilla; la
-      diferencia se absorbe en los margenes derecho e inferior.
-
-      Posicion de etiqueta (1-indexed) en mm:
-        top  = 14 + (row - 1) * 25
-        left = 4  + (col - 1) * 71
-    */
     @page {
       size: letter portrait;
       margin: 0;
@@ -41,10 +66,10 @@
     }
     .etiqueta {
       position: absolute;
-      width: 67mm;
-      height: 25mm;
+      width: {{ round($anchoEt, 3) }}mm;
+      height: {{ round($altoEt, 3) }}mm;
       box-sizing: border-box;
-      padding: 1.5mm 2mm;
+      padding: 1.5mm {{ round(2 / $escalaH, 3) }}mm;
       overflow: hidden;
       /* sin borde en produccion; descomentar para debug de alineado */
       /* border: 0.2mm dashed #e11; */
@@ -56,11 +81,11 @@
     .et-marca {
       position: absolute;
       top: 2mm;
-      left: 2mm;
-      width: 15mm;
+      left: {{ round(2 / $escalaH, 3) }}mm;
+      width: {{ round($qrLado, 3) }}mm;
     }
     .et-marca img {
-      width: 15mm;
+      width: {{ round($qrLado, 3) }}mm;
       height: 15mm;
       display: block;
     }
@@ -73,10 +98,9 @@
     }
 
     /* Columna de texto, pegada al borde derecho del QR. El padding-left
-       reserva los 15mm del QR mas 2mm de aire, sobre los 63mm de caja de
-       contenido => 46mm utiles. */
+       reserva el ancho del QR mas 2mm de aire. */
     .et-info {
-      padding-left: 17mm;
+      padding-left: {{ round(17 / $escalaH, 3) }}mm;
     }
     /* Bloque 1 — producto: RAL + nombre oficial en una linea, textura debajo.
        El nombre comparte linea base con el RAL; si es largo se recorta contra
@@ -128,15 +152,15 @@
     <div class="hoja">
       @foreach ($celdas as $celda)
         @php
-          $top  = 14 + ($celda['row'] - 1) * 25;
-          $left = 4  + ($celda['col'] - 1) * 71;
+          $top  = $margenTop  + ($celda['row'] - 1) * $pasoV;
+          $left = $margenLeft + ($celda['col'] - 1) * $pasoH;
 
           $fechas = 'R' . $lote->fecha_recepcion->format('ym');
           if ($lote->fecha_vencimiento) {
               $fechas .= ' / V' . $lote->fecha_vencimiento->format('ym');
           }
         @endphp
-        <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
+        <div class="etiqueta" style="top: {{ round($top, 3) }}mm; left: {{ round($left, 3) }}mm;">
           <div class="et-marca">
             <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}">
             <div class="et-pildora" style="background-color: {{ $lote->producto->hex }};"></div>
