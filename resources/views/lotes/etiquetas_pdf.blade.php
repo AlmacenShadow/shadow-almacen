@@ -97,9 +97,14 @@
       margin-top: 1mm;
     }
     .et-barcode img {
-      width: 100%;
+      /* Caja de contenido = 66.7 - 2.5 de padding a cada lado = 61.7mm.
+         Lo dejamos 10mm más angosto y centrado para que no roce los bordes. */
+      width: 51.7mm;
       height: 9mm;
       display: block;
+      /* dompdf ignora "margin: 0 auto" en imágenes, así que centramos a mano:
+         sobran 10mm, 5mm de cada lado. */
+      margin-left: 5mm;
     }
     .et-codigo {
       font-family: "Courier New", monospace;
