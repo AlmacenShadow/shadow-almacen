@@ -229,21 +229,25 @@ class LoteController extends Controller
             $primeraHoja = false;
         }
 
-        // Barcode escaneable (Code 128). dompdf prefiere PNG embebido vía data URI.
-        // getBarcodePNG retorna directamente la cadena base64 lista para data URI.
-        $barcodeBase64 = (new \Milon\Barcode\DNS1D())->getBarcodePNG(
+        // QR escaneable. Nivel de corrección H (30% de tolerancia a daño) porque
+        // las cajas viven en planta con polvo y las etiquetas se rozan. Con un
+        // payload corto como "LOT-00001" el QR sigue siendo versión 1 (21x21
+        // módulos) incluso con H, así que a 20mm impresos queda holgado.
+        // El código que lleva dentro es el mismo codigo_barcode de siempre: la
+        // tablet lo recibe como texto del escáner y detecta el prefijo "LOT-".
+        $qrBase64 = (new \Milon\Barcode\DNS2D())->getBarcodePNG(
             $lote->codigo_barcode,
-            'C128',
-            2,     // width factor
-            60,    // height (px)
+            'QRCODE,H',
+            12,    // px por módulo
+            12,
             [0, 0, 0]
         );
-        $barcodeDataUri = 'data:image/png;base64,' . $barcodeBase64;
+        $qrDataUri = 'data:image/png;base64,' . $qrBase64;
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('lotes.etiquetas_pdf', [
-            'lote'           => $lote,
-            'hojas'          => $hojas,
-            'barcodeDataUri' => $barcodeDataUri,
+            'lote'      => $lote,
+            'hojas'     => $hojas,
+            'qrDataUri' => $qrDataUri,
         ])->setPaper('letter', 'portrait');
 
         return $pdf->stream("etiquetas-{$lote->codigo_barcode}.pdf");

@@ -5,19 +5,20 @@
   <title>Etiquetas {{ $lote->codigo_barcode }}</title>
   <style>
     /*
-      Avery 5160 en hoja Letter (8.5" x 11" = 215.9mm x 279.4mm).
-      Grid 3 cols x 10 rows = 30 etiquetas.
+      Hoja Letter (8.5" x 11" = 215.9mm x 279.4mm), grid 3 cols x 10 rows.
+      NO son Avery 5160: son etiquetas genericas, medidas por el usuario.
 
-      Medidas oficiales Avery 5160:
-        - Margen superior:    12.7 mm  (0.5")
-        - Margen izquierdo:    4.8 mm  (0.1875")
-        - Etiqueta:           66.7 mm × 25.4 mm  (2.625" × 1")
-        - Gap horizontal:      3.2 mm  (0.125")
-        - Gap vertical:        0 mm    (filas contiguas)
+        Horizontal: 4mm + 67mm + 4mm + 67mm + 4mm + 67mm + 4mm
+        Vertical:   14mm + (25mm x 10) + 14mm   (filas contiguas, sin gap)
 
-      Posición de etiqueta (1-indexed) en mm:
-        top  = 12.7 + (row - 1) * 25.4
-        left = 4.8  + (col - 1) * (66.7 + 3.2) = 4.8 + (col - 1) * 69.9
+      Las sumas del usuario dan 217mm y 278mm contra los 215.9 y 279.4 reales,
+      asi que vienen redondeadas. Anclamos en el margen izquierdo (4mm) y el
+      superior (14mm), que son los que definen donde arranca la grilla; la
+      diferencia se absorbe en los margenes derecho e inferior.
+
+      Posicion de etiqueta (1-indexed) en mm:
+        top  = 14 + (row - 1) * 25
+        left = 4  + (col - 1) * 71
     */
     @page {
       size: letter portrait;
@@ -40,42 +41,48 @@
     }
     .etiqueta {
       position: absolute;
-      width: 66.7mm;
-      height: 25.4mm;
+      width: 67mm;
+      height: 25mm;
       box-sizing: border-box;
-      padding: 1.5mm 2.5mm;
+      padding: 1.5mm 2mm;
       overflow: hidden;
-      /* sin borde en producción; descomentar para debug de alineado */
-      /* border: 0.1mm dashed #ccc; */
+      /* sin borde en produccion; descomentar para debug de alineado */
+      /* border: 0.2mm dashed #e11; */
     }
-    /* Columna izquierda: SHADOW + RAL + nombre/textura.
-       Ocupa el ancho izquierdo, la columna derecha (fechas) la posicionamos
-       absolute para que dompdf nos deje controlar su posición vertical. */
-    .et-info {
-      padding-right: 22mm; /* deja espacio para que las fechas absolute no pisen */
-    }
-    .et-fechas-abs {
+
+    /* QR cuadrado a la derecha. Absolute para que dompdf no lo meta en el flujo
+       vertical y nos deje el alto completo para el bloque de texto. */
+    .et-qr {
       position: absolute;
-      top: 3.5mm;          /* Rec al nivel del RAL, Vence al nivel del subtítulo */
-      right: 2.5mm;
-      text-align: right;
-      font-size: 6pt;
-      color: #555;
-      line-height: 1.3;
+      top: 2.5mm;
+      right: 2mm;
+    }
+    .et-qr img {
+      width: 20mm;
+      height: 20mm;
+      display: block;
+    }
+
+    /* Columna de texto a la izquierda. El padding-right reserva el ancho del QR
+       (20mm) mas 2mm de aire, sobre los 63mm de caja de contenido => 41mm utiles. */
+    .et-info {
+      padding-right: 22mm;
     }
     .et-shadow {
+      display: block;
       font-size: 6pt;
+      line-height: 1;
       letter-spacing: 0.5pt;
       font-weight: bold;
       color: #666;
     }
     .et-ral {
-      font-size: 11pt;
+      font-size: 13pt;
       font-weight: bold;
       line-height: 1;
-      margin: 0.2mm 0 0 0;
+      margin: 0.3mm 0 0 0;
     }
-    /* Línea inline con nombre oficial + textura + brillo */
+    /* Nombre oficial K7 + textura/brillo entre corchetes, en una sola linea */
     .et-detalle {
       font-size: 6.5pt;
       color: #333;
@@ -93,38 +100,33 @@
     .et-textura-inline {
       color: #555;
     }
-    .et-barcode {
-      margin-top: 1mm;
-    }
-    .et-barcode img {
-      /* Caja de contenido = 66.7 - 2.5 de padding a cada lado = 61.7mm.
-         Lo dejamos 10mm más angosto y centrado para que no roce los bordes. */
-      width: 51.7mm;
-      height: 9mm;
-      display: block;
-      /* dompdf ignora "margin: 0 auto" en imágenes, así que centramos a mano:
-         sobran 10mm, 5mm de cada lado. */
-      margin-left: 5mm;
+    .et-fechas {
+      font-size: 6pt;
+      color: #555;
+      line-height: 1.3;
+      margin: 0.8mm 0 0 0;
     }
     .et-codigo {
       font-family: "Courier New", monospace;
-      font-size: 7pt;
+      font-size: 8pt;
       font-weight: bold;
-      text-align: center;
-      margin: 1mm 0 0 0;
+      margin: 0.8mm 0 0 0;
       line-height: 1;
     }
   </style>
 </head>
 <body>
-  @foreach ($hojas as $hojaIdx => $celdas)
+  @foreach ($hojas as $celdas)
     <div class="hoja">
       @foreach ($celdas as $celda)
         @php
-          $top  = 12.7 + ($celda['row'] - 1) * 25.4;
-          $left = 4.8  + ($celda['col'] - 1) * 69.9;
+          $top  = 14 + ($celda['row'] - 1) * 25;
+          $left = 4  + ($celda['col'] - 1) * 71;
         @endphp
         <div class="etiqueta" style="top: {{ $top }}mm; left: {{ $left }}mm;">
+          <div class="et-qr">
+            <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}">
+          </div>
           <div class="et-info">
             <span class="et-shadow">SHADOW</span>
             <div class="et-ral">{{ $lote->producto->ral }}</div>
@@ -134,17 +136,14 @@
               @endif
               <span class="et-textura-inline">[{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]</span>
             </div>
+            <div class="et-fechas">
+              <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
+              @if ($lote->fecha_vencimiento)
+                <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
+              @endif
+            </div>
+            <p class="et-codigo">{{ $lote->codigo_barcode }}</p>
           </div>
-          <div class="et-fechas-abs">
-            <div>Rec. {{ $lote->fecha_recepcion->format('Y-m-d') }}</div>
-            @if ($lote->fecha_vencimiento)
-              <div>Vence {{ $lote->fecha_vencimiento->format('Y-m-d') }}</div>
-            @endif
-          </div>
-          <div class="et-barcode">
-            <img src="{{ $barcodeDataUri }}" alt="{{ $lote->codigo_barcode }}">
-          </div>
-          <p class="et-codigo">{{ $lote->codigo_barcode }}</p>
         </div>
       @endforeach
     </div>
