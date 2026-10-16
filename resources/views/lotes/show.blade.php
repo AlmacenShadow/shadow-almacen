@@ -80,29 +80,32 @@
         }
       @endphp
       <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 mb-4">
-        <div class="border-2 border-slate-800 rounded px-2 py-1.5 bg-white flex items-start gap-2"
-             style="aspect-ratio: 67 / 25;">
+        {{-- Replica a escala 3px = 1mm sobre la etiqueta de 67 x 25mm, para que
+             las proporciones de tipografía y QR sean las del PDF y no las del
+             ancho del panel. Sin truncate: si el nombre no cabe baja de línea,
+             igual que dompdf. --}}
+        <div class="mx-auto border border-slate-800 bg-white flex items-start overflow-hidden"
+             style="width: 201px; height: 75px; padding: 4.5px 6px; gap: 6px;">
+          <div class="shrink-0" style="width: 45px;">
+            <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}"
+                 class="w-full aspect-square" style="image-rendering: pixelated;">
+            <div class="rounded-full border border-slate-400"
+                 style="height: 10px; margin-top: 3.5px; background-color: {{ $lote->producto->hex }};"></div>
+          </div>
           <div class="flex-1 min-w-0">
-            {{-- Bloque producto: RAL + nombre en una línea, textura debajo --}}
-            <p class="leading-none truncate">
-              <span class="font-bold text-slate-900 text-base">{{ $lote->producto->ral }}</span>
+            {{-- Bloque producto --}}
+            <p class="leading-none">
+              <span class="font-bold text-slate-900" style="font-size: 14px;">{{ $lote->producto->ral }}</span>
               @if ($lote->producto->nombre_ral_oficial)
-                <span class="text-[8px] font-bold uppercase text-slate-800 ml-1">{{ $lote->producto->nombre_ral_oficial }}</span>
+                <span class="font-bold uppercase text-slate-800" style="font-size: 7px; margin-left: 4px;">{{ $lote->producto->nombre_ral_oficial }}</span>
               @endif
             </p>
-            <p class="text-sm text-slate-700 leading-none mt-0.5 truncate">
+            <p class="text-slate-700 leading-none" style="font-size: 12px; margin-top: 1px;">
               [{{ $lote->producto->textura?->nombre ?? '?' }} · {{ $lote->producto->brillo_pct }}%]
             </p>
             {{-- Bloque almacén, separado del de producto --}}
-            <p class="text-sm mt-2 font-mono font-bold leading-none">{{ $lote->codigo_barcode }}</p>
-            <p class="text-[8px] text-slate-500 leading-none mt-0.5">{{ $fechasEtiqueta }}</p>
-          </div>
-          {{-- 15mm de QR sobre 67mm de etiqueta = 22% del ancho; la píldora va debajo --}}
-          <div class="w-[22%] shrink-0">
-            <img src="{{ $qrDataUri }}" alt="{{ $lote->codigo_barcode }}"
-                 class="w-full aspect-square" style="image-rendering: pixelated;">
-            <div class="mt-1 h-2 rounded-full border border-slate-400"
-                 style="background-color: {{ $lote->producto->hex }};"></div>
+            <p class="font-mono font-bold leading-none" style="font-size: 12px; margin-top: 6px;">{{ $lote->codigo_barcode }}</p>
+            <p class="text-slate-500 leading-none" style="font-size: 7px; margin-top: 2px;">{{ $fechasEtiqueta }}</p>
           </div>
         </div>
       </div>

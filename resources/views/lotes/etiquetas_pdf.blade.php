@@ -50,13 +50,13 @@
       /* border: 0.2mm dashed #e11; */
     }
 
-    /* Columna derecha: QR con la pildora de color debajo. Absolute para que
+    /* Columna izquierda: QR con la pildora de color debajo. Absolute para que
        dompdf no la meta en el flujo vertical y nos deje el alto completo
        disponible para el bloque de texto. */
     .et-marca {
       position: absolute;
       top: 2mm;
-      right: 2mm;
+      left: 2mm;
       width: 15mm;
     }
     .et-marca img {
@@ -72,10 +72,11 @@
       border-radius: 1.75mm;
     }
 
-    /* Columna de texto. El padding-right reserva los 15mm del QR mas 2mm de
-       aire, sobre los 63mm de caja de contenido => 46mm utiles. */
+    /* Columna de texto, pegada al borde derecho del QR. El padding-left
+       reserva los 15mm del QR mas 2mm de aire, sobre los 63mm de caja de
+       contenido => 46mm utiles. */
     .et-info {
-      padding-right: 17mm;
+      padding-left: 17mm;
     }
     /* Bloque 1 — producto: RAL + nombre oficial en una linea, textura debajo.
        El nombre comparte linea base con el RAL; si es largo se recorta contra
