@@ -21,14 +21,7 @@
     <div class="grid grid-cols-2 gap-5">
       <div class="col-span-2">
         <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Producto</label>
-        <select name="producto_id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-          <option value="">— elegir —</option>
-          @foreach ($productos as $p)
-            <option value="{{ $p->id }}" @selected(old('producto_id') == $p->id)>
-              {{ $p->descripcion_completa }}
-            </option>
-          @endforeach
-        </select>
+        <x-producto-select :productos="$productos" :selected="old('producto_id')" />
       </div>
 
       <div>
@@ -63,9 +56,10 @@
       </div>
 
       <div>
-        <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Proveedor (opcional)</label>
+        <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Proveedor — empresa (opcional)</label>
         <input type="text" name="proveedor" value="{{ old('proveedor') }}" maxlength="120"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+               class="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="A quién se le compró. Ej: Pinturas del Istmo">
+        <p class="text-xs text-slate-400 mt-1">El país de fabricación va en el producto (la bandera), no aquí.</p>
       </div>
 
       <div>

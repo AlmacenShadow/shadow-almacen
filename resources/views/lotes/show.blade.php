@@ -14,8 +14,8 @@
             <x-propietario-alerta :nombre="$lote->propietario_nombre" class="w-6 h-6" />
           @endif
         </h2>
-        <p class="text-sm text-slate-500">
-          {{ $lote->producto->descripcion_corta }}
+        <p class="text-sm text-slate-500 flex items-center gap-1.5 flex-wrap">
+          <x-producto-resumen :p="$lote->producto" small />
           @if ($lote->producto->nombre_ral_oficial)
             <span class="text-slate-400">· {{ $lote->producto->nombre_ral_oficial }}</span>
           @endif
@@ -37,7 +37,7 @@
       <h3 class="font-semibold text-slate-800 mb-4">Datos del lote</h3>
       <dl class="grid grid-cols-2 gap-y-3 text-sm">
         <dt class="text-slate-500">Producto</dt>
-        <dd class="font-semibold">{{ $lote->producto->descripcion_corta }}</dd>
+        <dd><x-producto-resumen :p="$lote->producto" /></dd>
 
         @if ($lote->propietario_externo)
           <dt class="text-slate-500">Propietario externo</dt>
@@ -65,7 +65,7 @@
         <dt class="text-slate-500">Stock actual</dt>
         <dd class="tabular-nums font-bold text-emerald-700">{{ number_format($lote->stock_kg, 3) }} kg</dd>
 
-        <dt class="text-slate-500">Proveedor</dt>
+        <dt class="text-slate-500">Proveedor (empresa)</dt>
         <dd>{{ $lote->proveedor ?: '—' }}</dd>
 
         <dt class="text-slate-500">Factura</dt>
