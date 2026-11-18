@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Lote;
 use App\Models\Movimiento;
+use App\Models\Producto;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,11 +44,16 @@ class TabletController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
+                'productos.tipo_pintura', 'productos.descripcion', 'productos.acabado', 'productos.superficie',
+                'productos.textura_tipo', 'productos.metalizado', 'productos.origen', 'productos.marca',
+                'productos.referencia', 'productos.curado_temp_c', 'productos.curado_tiempo_min',
+                DB::raw('productos.notas as producto_notas'),
                 DB::raw("COALESCE(NULLIF(productos.hex_override, ''), ral_catalogo.hex, '#cbd5e1') as hex"),
                 DB::raw('ral_catalogo.nombre_oficial as nombre_ral_oficial')
             )
             ->orderBy('productos.ral')
-            ->get();
+            ->get()
+            ->map(fn ($p) => self::enriquecer($p));
 
         // Incluimos TODOS los lotes (incluso con stock 0) porque la tablet
         // necesita poder hacer retornos sobre lotes que se vaciaron.
@@ -63,15 +69,26 @@ class TabletController extends Controller
                 'lotes.fecha_recepcion',
                 'lotes.fecha_vencimiento',
                 'lotes.peso_tara_unitario_kg',
+                'lotes.propietario_externo',
+                'lotes.propietario_nombre',
+                DB::raw('lotes.notas as lote_notas'),
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
+                'productos.tipo_pintura', 'productos.descripcion', 'productos.acabado', 'productos.superficie',
+                'productos.textura_tipo', 'productos.metalizado', 'productos.origen', 'productos.marca',
+                'productos.referencia', 'productos.curado_temp_c', 'productos.curado_tiempo_min',
+                DB::raw('productos.notas as producto_notas'),
                 DB::raw("COALESCE(NULLIF(productos.hex_override, ''), ral_catalogo.hex, '#cbd5e1') as hex"),
                 DB::raw('ral_catalogo.nombre_oficial as nombre_ral_oficial'),
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_actual_kg')
             )
             ->orderBy('lotes.fecha_recepcion')
-            ->get();
+            ->get()
+            ->map(function ($l) {
+                $l->propietario_externo = (bool) $l->propietario_externo;
+                return self::enriquecer($l);
+            });
 
         return response()->json([
             'timestamp' => now()->toIso8601String(),
@@ -79,6 +96,20 @@ class TabletController extends Controller
             'productos' => $productos,
             'lotes'     => $lotes,
         ]);
+    }
+
+    /**
+     * Campos calculados para que la tablet no repita la lógica del modelo:
+     * sigla (POL, EPO…), textura_label ("Brillante · Martillado") y nombre del origen.
+     * Se mantienen 'textura' y 'brillo_pct' para las versiones viejas de la app.
+     */
+    private static function enriquecer(object $p): object
+    {
+        $p->metalizado    = (bool) $p->metalizado;
+        $p->sigla         = Producto::sigla($p->tipo_pintura);
+        $p->textura_label = Producto::texturaLabelDe($p) ?? $p->textura;
+        $p->origen_nombre = Producto::ORIGENES[$p->origen ?? ''] ?? null;
+        return $p;
     }
 
     /**
@@ -135,6 +166,9 @@ class TabletController extends Controller
                 'peso_tara_unitario_kg'       => (float) $lote->peso_tara_unitario_kg,
                 'peso_total_recepcionado_kg'  => (float) $lote->peso_total_recepcionado_kg,
                 'stock_actual_kg'             => (float) $lote->stock_kg,
+                'propietario_externo'         => (bool) $lote->propietario_externo,
+                'propietario_nombre'          => $lote->propietario_nombre,
+                'lote_notas'                  => $lote->notas,
             ],
             'producto' => [
                 'ral'                => $lote->producto->ral,
@@ -142,6 +176,17 @@ class TabletController extends Controller
                 'brillo_pct'         => $lote->producto->brillo_pct,
                 'hex'                => $lote->producto->hex,
                 'nombre_ral_oficial' => $lote->producto->nombre_ral_oficial,
+                'sigla'              => Producto::sigla($lote->producto->tipo_pintura),
+                'tipo_pintura'       => $lote->producto->tipo_pintura,
+                'descripcion'        => $lote->producto->descripcion,
+                'textura_label'      => $lote->producto->textura_label,
+                'origen'             => $lote->producto->origen,
+                'origen_nombre'      => Producto::ORIGENES[$lote->producto->origen ?? ''] ?? null,
+                'marca'              => $lote->producto->marca,
+                'referencia'         => $lote->producto->referencia,
+                'curado_temp_c'      => $lote->producto->curado_temp_c,
+                'curado_tiempo_min'  => $lote->producto->curado_tiempo_min,
+                'producto_notas'     => $lote->producto->notas,
             ],
             // Si no es null, la tablet debe avisar "hay un lote anterior, usa ése primero"
             'aviso_fifo' => $loteAnterior ? [

@@ -94,7 +94,7 @@ class LoteController extends Controller
         $data = $request->validate([
             'producto_id'                => ['required', 'exists:productos,id'],
             'fecha_recepcion'            => ['required', 'date'],
-            'fecha_vencimiento'          => ['nullable', 'date', 'after:fecha_recepcion'],
+            'fecha_vencimiento'          => ['nullable', 'date'], // puede ser anterior a hoy o a la recepción (pintura ya vencida)
             'peso_total_recepcionado_kg' => ['required', 'numeric', 'min:0.001'],
             'peso_tara_unitario_kg'      => ['required', 'numeric', 'min:0'],
             'cantidad_cajas'             => ['required', 'integer', 'min:1'],
@@ -213,7 +213,7 @@ class LoteController extends Controller
         $rules = [
             'proveedor'         => ['nullable', 'string', 'max:120'],
             'factura'           => ['nullable', 'string', 'max:60'],
-            'fecha_vencimiento' => ['nullable', 'date', 'after:fecha_recepcion'],
+            'fecha_vencimiento' => ['nullable', 'date'],
             ...self::REGLAS_EXTRA,
         ];
 
