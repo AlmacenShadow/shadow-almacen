@@ -174,7 +174,7 @@ class MovimientoController extends Controller
             ]);
 
             $flash = "Corregido: el movimiento #{$movimiento->id} queda reemplazado por #{$hijo->id} "
-                . "con " . number_format((float) $data['peso_correcto'], 3) . " kg.";
+                . "con " . number_format((float) $data['peso_correcto'], 2) . " kg.";
         }
 
         return redirect()

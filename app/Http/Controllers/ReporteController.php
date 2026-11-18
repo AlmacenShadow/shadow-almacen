@@ -163,10 +163,10 @@ class ReporteController extends Controller
                             $r->textura,
                             $r->brillo_pct,
                             strtoupper($r->nivel),
-                            number_format((float) $r->stock_kg, 3, '.', ''),
-                            number_format((float) $r->stock_minimo_kg, 3, '.', ''),
-                            number_format((float) $r->stock_critico_kg, 3, '.', ''),
-                            number_format(max(0, (float) $r->stock_minimo_kg - (float) $r->stock_kg), 3, '.', ''),
+                            number_format((float) $r->stock_kg, 2, '.', ''),
+                            number_format((float) $r->stock_minimo_kg, 2, '.', ''),
+                            number_format((float) $r->stock_critico_kg, 2, '.', ''),
+                            number_format(max(0, (float) $r->stock_minimo_kg - (float) $r->stock_kg), 2, '.', ''),
                         ]);
                     }
                     break;
@@ -177,9 +177,9 @@ class ReporteController extends Controller
                         fputcsv($out, [
                             $r->nombre,
                             $r->codigo_barcode,
-                            number_format((float) $r->kg_salidas, 3, '.', ''),
-                            number_format((float) $r->kg_retornos, 3, '.', ''),
-                            number_format((float) $r->kg_netos, 3, '.', ''),
+                            number_format((float) $r->kg_salidas, 2, '.', ''),
+                            number_format((float) $r->kg_retornos, 2, '.', ''),
+                            number_format((float) $r->kg_netos, 2, '.', ''),
                             $r->movimientos_count,
                         ]);
                     }
@@ -193,9 +193,9 @@ class ReporteController extends Controller
                             $r->ral,
                             $r->textura,
                             $r->brillo_pct,
-                            number_format((float) $r->kg_salidas, 3, '.', ''),
-                            number_format((float) $r->kg_retornos, 3, '.', ''),
-                            number_format((float) $r->kg_netos, 3, '.', ''),
+                            number_format((float) $r->kg_salidas, 2, '.', ''),
+                            number_format((float) $r->kg_retornos, 2, '.', ''),
+                            number_format((float) $r->kg_netos, 2, '.', ''),
                             $r->movimientos_count,
                         ]);
                     }

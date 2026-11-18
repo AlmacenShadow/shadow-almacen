@@ -89,7 +89,7 @@
                 @endif
               </td>
               <td class="px-4 py-3 text-right tabular-nums {{ $clase }}"
-                  title="Mínimo {{ number_format($p->stock_minimo_kg, 0) }} kg · crítico {{ number_format($p->stock_critico_kg, 0) }} kg">{{ number_format($stock, 3) }} kg</td>
+                  title="Mínimo @kg($p->stock_minimo_kg, 0) }} kg · crítico {{ number_format($p->stock_critico_kg, 0) }} kg">{{ number_format($stock) kg</td>
               <td class="px-4 py-3 text-center text-slate-500 tabular-nums">{{ $p->lotes_count }}</td>
               <td class="px-4 py-3 text-center">
                 @if ($p->activo)

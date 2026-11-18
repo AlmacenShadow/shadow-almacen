@@ -75,7 +75,7 @@
             @endphp
             <tr class="{{ $m->anomalia ? 'bg-amber-50' : '' }} {{ $m->corregido_por_id ? 'opacity-60' : '' }}">
               <td class="px-5 py-3 text-slate-600 tabular-nums whitespace-nowrap">
-                {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('Y-m-d H:i') }}
+                @fechaHora($m->created_at)
               </td>
               <td class="px-5 py-3 whitespace-nowrap">
                 <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $tipoBadge[0] }}">
@@ -121,7 +121,7 @@
               </td>
               <td class="px-5 py-3 text-right whitespace-nowrap">
                 <span class="font-semibold tabular-nums {{ $pesoClase }}">
-                  {{ $signo }}{{ number_format($m->peso_kg, 3) }} kg
+                  {{ $signo }}@kg($m->peso_kg) kg
                 </span>
                 @if ($m->peso_manual)
                   <div class="text-xs text-slate-400 italic">manual</div>

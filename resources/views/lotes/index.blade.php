@@ -64,14 +64,14 @@
                   <div class="text-xs text-slate-500 mt-0.5">{{ $l->descripcion }}</div>
                 @endif
               </td>
-              <td class="px-4 py-3 text-right tabular-nums">{{ \Illuminate\Support\Carbon::parse($l->fecha_recepcion)->format('Y-m-d') }}</td>
+              <td class="px-4 py-3 text-right tabular-nums">@fecha($l->fecha_recepcion)</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">
-                {{ $l->fecha_vencimiento ? \Illuminate\Support\Carbon::parse($l->fecha_vencimiento)->format('Y-m-d') : '—' }}
+                @fecha($l->fecha_vencimiento)
               </td>
               <td class="px-4 py-3 text-right tabular-nums">{{ $l->cantidad_cajas }}</td>
-              <td class="px-4 py-3 text-right tabular-nums">{{ number_format($l->peso_total_recepcionado_kg, 3) }} kg</td>
+              <td class="px-4 py-3 text-right tabular-nums">@kg($l->peso_total_recepcionado_kg) kg</td>
               <td class="px-4 py-3 text-right">
-                <div class="font-semibold tabular-nums">{{ number_format($l->stock_kg, 3) }} kg</div>
+                <div class="font-semibold tabular-nums">@kg($l->stock_kg) kg</div>
                 <div class="w-32 ml-auto bg-slate-200 rounded-full h-1.5 mt-1">
                   <div class="{{ $color }} h-1.5 rounded-full" style="width: {{ $pct }}%"></div>
                 </div>

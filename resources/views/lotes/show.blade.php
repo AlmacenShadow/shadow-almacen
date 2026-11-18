@@ -48,22 +48,22 @@
         @endif
 
         <dt class="text-slate-500">Fecha de recepción</dt>
-        <dd>{{ $lote->fecha_recepcion->format('Y-m-d') }}</dd>
+        <dd>@fecha($lote->fecha_recepcion)</dd>
 
         <dt class="text-slate-500">Fecha de vencimiento</dt>
-        <dd>{{ $lote->fecha_vencimiento?->format('Y-m-d') ?? '—' }}</dd>
+        <dd>@fecha($lote->fecha_vencimiento)</dd>
 
         <dt class="text-slate-500">Cantidad de cajas</dt>
         <dd class="tabular-nums">{{ $lote->cantidad_cajas }}</dd>
 
         <dt class="text-slate-500">Peso total recepcionado</dt>
-        <dd class="tabular-nums font-semibold">{{ number_format($lote->peso_total_recepcionado_kg, 3) }} kg</dd>
+        <dd class="tabular-nums font-semibold">@kg($lote->peso_total_recepcionado_kg) kg</dd>
 
         <dt class="text-slate-500">Tara por caja</dt>
-        <dd class="tabular-nums">{{ number_format($lote->peso_tara_unitario_kg, 3) }} kg</dd>
+        <dd class="tabular-nums">@kg($lote->peso_tara_unitario_kg) kg</dd>
 
         <dt class="text-slate-500">Stock actual</dt>
-        <dd class="tabular-nums font-bold text-emerald-700">{{ number_format($lote->stock_kg, 3) }} kg</dd>
+        <dd class="tabular-nums font-bold text-emerald-700">@kg($lote->stock_kg) kg</dd>
 
         <dt class="text-slate-500">Proveedor (empresa)</dt>
         <dd>{{ $lote->proveedor ?: '—' }}</dd>
@@ -198,7 +198,7 @@
         {{-- Fila 0: la recepción (origen del lote) --}}
         <tr class="bg-blue-50/50">
           <td class="px-5 py-3 text-slate-700 tabular-nums whitespace-nowrap">
-            {{ $lote->fecha_recepcion->format('Y-m-d') }}
+            @fecha($lote->fecha_recepcion)
           </td>
           <td class="px-5 py-3 whitespace-nowrap">
             <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
@@ -211,11 +211,11 @@
           </td>
           <td class="px-5 py-3 text-right whitespace-nowrap">
             <span class="font-semibold tabular-nums text-blue-700">
-              +{{ number_format($lote->peso_total_recepcionado_kg, 3) }} kg
+              +@kg($lote->peso_total_recepcionado_kg) kg
             </span>
           </td>
           <td class="px-5 py-3 text-right tabular-nums font-semibold text-slate-700">
-            {{ number_format($lote->peso_total_recepcionado_kg, 3) }} kg
+            @kg($lote->peso_total_recepcionado_kg) kg
           </td>
           <td class="px-5 py-3 text-slate-600">
             {{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }}
@@ -263,7 +263,7 @@
           @endphp
           <tr id="mov-{{ $m->id }}" class="{{ $m->anomalia ? 'bg-amber-50' : '' }} {{ $m->corregido_por_id ? 'opacity-60' : '' }}">
             <td class="px-5 py-3 text-slate-600 tabular-nums whitespace-nowrap">
-              {{ \Illuminate\Support\Carbon::parse($m->created_at)->format('Y-m-d H:i') }}
+              @fechaHora($m->created_at)
             </td>
             <td class="px-5 py-3 whitespace-nowrap">
               <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold {{ $tipoBadge[0] }}">
@@ -298,14 +298,14 @@
             </td>
             <td class="px-5 py-3 text-right whitespace-nowrap">
               <span class="font-semibold tabular-nums {{ $pesoClase }}">
-                {{ $signo }}{{ number_format(abs($delta), 3) }} kg
+                {{ $signo }}@kg(abs($delta)) kg
               </span>
               @if ($m->peso_manual)
                 <div class="text-xs text-slate-400 italic">manual</div>
               @endif
             </td>
             <td class="px-5 py-3 text-right tabular-nums {{ $stockAcumulado < -0.001 ? 'text-red-700 font-bold' : 'text-slate-700' }}">
-              {{ number_format($stockAcumulado, 3) }} kg
+              @kg($stockAcumulado) kg
             </td>
             <td class="px-5 py-3 text-slate-600">
               @if ($m->motivo_descripcion)
@@ -343,7 +343,7 @@
             Stock actual (según vista v_stock_lote)
           </td>
           <td class="px-5 py-3 text-right tabular-nums font-bold text-emerald-700">
-            {{ number_format($lote->stock_kg, 3) }} kg
+            @kg($lote->stock_kg) kg
           </td>
           <td colspan="2" class="px-5 py-3 text-xs text-slate-500">
             @php
@@ -351,7 +351,7 @@
             @endphp
             @if ($diff > 0.001)
               <span class="text-amber-700" title="El stock calculado y el de la vista difieren — puede ser por movimientos pendientes de sync">
-                ⚠ diff {{ number_format($diff, 3) }} kg
+                ⚠ diff @kg($diff) kg
               </span>
             @else
               <span class="text-emerald-600">✓ cuadra</span>

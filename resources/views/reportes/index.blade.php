@@ -106,12 +106,12 @@
                 @endif
               </td>
               <td class="px-4 py-3 text-right tabular-nums font-bold {{ $p->nivel === 'critico' ? 'text-red-700' : 'text-amber-700' }}">
-                {{ number_format($p->stock_kg, 3) }} kg
+                @kg($p->stock_kg) kg
               </td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ number_format($p->stock_minimo_kg, 0) }} kg</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ number_format($p->stock_critico_kg, 0) }} kg</td>
               <td class="px-4 py-3 text-right tabular-nums font-semibold text-slate-700">
-                +{{ number_format(max(0, $deficit), 3) }} kg
+                +@kg(max(0, $deficit)) kg
               </td>
             </tr>
           @endforeach
@@ -126,7 +126,7 @@
       <div>
         <h3 class="font-semibold text-slate-800">Consumo por producto</h3>
         <p class="text-xs text-slate-500 mt-0.5">
-          Salidas y retornos del {{ $desde->format('Y-m-d') }} al {{ $hasta->format('Y-m-d') }}. Ordenado por consumo neto descendente.
+          Salidas y retornos del @fecha($desde) al @fecha($hasta). Ordenado por consumo neto descendente.
         </p>
       </div>
       @if ($porProducto->isNotEmpty())
@@ -162,9 +162,9 @@
                 <div class="font-mono font-semibold">{{ $r->ral }}</div>
                 <div class="text-xs text-slate-500">{{ $r->textura ?? '—' }} · {{ $r->brillo_pct }}%</div>
               </td>
-              <td class="px-4 py-3 text-right tabular-nums text-red-700">{{ number_format($r->kg_salidas, 3) }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-emerald-700">{{ number_format($r->kg_retornos, 3) }}</td>
-              <td class="px-4 py-3 text-right tabular-nums font-bold">{{ number_format($r->kg_netos, 3) }}</td>
+              <td class="px-4 py-3 text-right tabular-nums text-red-700">@kg($r->kg_salidas)</td>
+              <td class="px-4 py-3 text-right tabular-nums text-emerald-700">@kg($r->kg_retornos)</td>
+              <td class="px-4 py-3 text-right tabular-nums font-bold">@kg($r->kg_netos)</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ $r->movimientos_count }}</td>
             </tr>
           @endforeach
@@ -172,9 +172,9 @@
         <tfoot class="bg-slate-50 border-t-2 border-slate-200">
           <tr>
             <td colspan="2" class="px-4 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Total</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold text-red-700">{{ number_format($porProducto->sum('kg_salidas'), 3) }}</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold text-emerald-700">{{ number_format($porProducto->sum('kg_retornos'), 3) }}</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold">{{ number_format($porProducto->sum('kg_netos'), 3) }}</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold text-red-700">@kg($porProducto->sum('kg_salidas'))</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold text-emerald-700">@kg($porProducto->sum('kg_retornos'))</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold">@kg($porProducto->sum('kg_netos'))</td>
             <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ $porProducto->sum('movimientos_count') }}</td>
           </tr>
         </tfoot>
@@ -218,9 +218,9 @@
             <tr>
               <td class="px-4 py-3 font-medium">{{ $p->nombre }}</td>
               <td class="px-4 py-3 font-mono text-slate-500">{{ $p->codigo_barcode }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-red-700">{{ number_format($p->kg_salidas, 3) }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-emerald-700">{{ number_format($p->kg_retornos, 3) }}</td>
-              <td class="px-4 py-3 text-right tabular-nums font-bold">{{ number_format($p->kg_netos, 3) }}</td>
+              <td class="px-4 py-3 text-right tabular-nums text-red-700">@kg($p->kg_salidas)</td>
+              <td class="px-4 py-3 text-right tabular-nums text-emerald-700">@kg($p->kg_retornos)</td>
+              <td class="px-4 py-3 text-right tabular-nums font-bold">@kg($p->kg_netos)</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ $p->movimientos_count }}</td>
             </tr>
           @endforeach
@@ -228,9 +228,9 @@
         <tfoot class="bg-slate-50 border-t-2 border-slate-200">
           <tr>
             <td colspan="2" class="px-4 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Total</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold text-red-700">{{ number_format($porPintor->sum('kg_salidas'), 3) }}</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold text-emerald-700">{{ number_format($porPintor->sum('kg_retornos'), 3) }}</td>
-            <td class="px-4 py-3 text-right tabular-nums font-bold">{{ number_format($porPintor->sum('kg_netos'), 3) }}</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold text-red-700">@kg($porPintor->sum('kg_salidas'))</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold text-emerald-700">@kg($porPintor->sum('kg_retornos'))</td>
+            <td class="px-4 py-3 text-right tabular-nums font-bold">@kg($porPintor->sum('kg_netos'))</td>
             <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ $porPintor->sum('movimientos_count') }}</td>
           </tr>
         </tfoot>

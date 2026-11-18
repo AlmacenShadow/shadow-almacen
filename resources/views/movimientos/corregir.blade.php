@@ -35,7 +35,7 @@
       ⚠ Este movimiento ya fue corregido por el registro
       <a href="{{ route('lotes.show', $movimiento->lote_id) }}#mov-{{ $yaCorregido->id }}"
          class="underline font-semibold">#{{ $yaCorregido->id }}</a>
-      el {{ $yaCorregido->created_at->format('Y-m-d H:i') }}.
+      el @fechaHora($yaCorregido->created_at).
       Si ese también quedó mal, corrige <strong>ese</strong>, no este.
     </div>
   @endif
@@ -58,7 +58,7 @@
           <dd class="font-mono">#{{ $movimiento->id }}</dd>
 
           <dt class="text-slate-500">Cuándo</dt>
-          <dd class="tabular-nums">{{ $movimiento->created_at->format('Y-m-d H:i') }}</dd>
+          <dd class="tabular-nums">@fechaHora($movimiento->created_at)</dd>
 
           <dt class="text-slate-500">Tipo</dt>
           <dd>
@@ -84,7 +84,7 @@
           <dd>{{ $movimiento->lote->producto->descripcion_corta }}</dd>
 
           <dt class="text-slate-500">Peso registrado</dt>
-          <dd class="tabular-nums font-bold">{{ number_format($movimiento->peso_kg, 3) }} kg</dd>
+          <dd class="tabular-nums font-bold">@kg($movimiento->peso_kg) kg</dd>
 
           @if ($movimiento->nota_texto)
             <dt class="text-slate-500">Nota original</dt>
@@ -133,7 +133,7 @@
                    value="{{ old('peso_correcto') }}"
                    class="w-48 px-3 py-2 border border-slate-300 rounded-lg tabular-nums text-lg font-semibold">
             <p class="text-xs text-slate-400 mt-1">
-              El original decía {{ number_format($movimiento->peso_kg, 3) }} kg.
+              El original decía @kg($movimiento->peso_kg) kg.
             </p>
           </div>
 
@@ -194,7 +194,7 @@
       const radios       = document.querySelectorAll('.accion-radio');
 
       function fmt(n) {
-        return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toFixed(3) + ' kg';
+        return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toFixed(2) + ' kg';
       }
 
       function pintar() {
