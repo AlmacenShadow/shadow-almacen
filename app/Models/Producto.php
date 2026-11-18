@@ -142,20 +142,29 @@ class Producto extends Model
             ->value('nombre_oficial');
     }
 
-    /** Etiqueta compuesta de la textura estructurada: "Mate · Texturizado · Martillado · Metalizado". */
+    /** Etiqueta compuesta de la textura estructurada: "Mate · Liso", "Brillante · Martillado · Metalizado". */
     public function getTexturaLabelAttribute(): string
     {
-        $partes = [];
-        if (!empty($this->acabado))    $partes[] = self::ACABADOS[$this->acabado] ?? $this->acabado;
-        // Si es texturizado con tipo, basta el tipo ("Martillado"), sin la palabra "Texturizado".
-        if ($this->superficie === 'texturizado' && !empty($this->textura_tipo)) {
-            $partes[] = self::TEXTURA_TIPOS[$this->textura_tipo] ?? $this->textura_tipo;
-        } elseif (!empty($this->superficie)) {
-            $partes[] = self::SUPERFICIES[$this->superficie] ?? $this->superficie;
-        }
-        if ($this->metalizado) $partes[] = 'Metalizado';
+        return self::texturaLabelDe($this) ?? ($this->textura?->nombre ?? '—');
+    }
 
-        return $partes ? implode(' · ', $partes) : ($this->textura?->nombre ?? '—');
+    /**
+     * Igual que textura_label pero para cualquier objeto con acabado/superficie/
+     * textura_tipo/metalizado (Producto o fila de DB::table). Null si no hay datos.
+     */
+    public static function texturaLabelDe(object $p): ?string
+    {
+        $partes = [];
+        if (!empty($p->acabado)) $partes[] = self::ACABADOS[$p->acabado] ?? $p->acabado;
+        // Si es texturizado con tipo, basta el tipo ("Martillado"), sin la palabra "Texturizado".
+        if (($p->superficie ?? null) === 'texturizado' && !empty($p->textura_tipo)) {
+            $partes[] = self::TEXTURA_TIPOS[$p->textura_tipo] ?? $p->textura_tipo;
+        } elseif (!empty($p->superficie)) {
+            $partes[] = self::SUPERFICIES[$p->superficie] ?? $p->superficie;
+        }
+        if (!empty($p->metalizado)) $partes[] = 'Metalizado';
+
+        return $partes ? implode(' · ', $partes) : null;
     }
 
     public function getDescripcionCortaAttribute(): string

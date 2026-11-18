@@ -5,7 +5,7 @@
   <div class="flex items-center justify-between mb-5">
     <div>
       <h2 class="text-2xl font-bold text-slate-900">Productos</h2>
-      <p class="text-sm text-slate-500">Cada combinación de RAL, tipo, textura y brillo es un producto distinto.</p>
+      <p class="text-sm text-slate-500">Cada combinación de RAL, tipo y textura es un producto distinto.</p>
     </div>
     <div class="flex items-center gap-2">
       <a href="{{ route('catalogo-ral.index') }}" target="_blank"
@@ -40,11 +40,10 @@
         <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
           <tr>
             <th class="px-3 py-3 w-12"></th>
-            <th class="text-left px-4 py-3">RAL</th>
+            <th class="text-left px-4 py-3">Producto</th>
             <th class="text-left px-4 py-3">Textura</th>
-            <th class="text-right px-4 py-3">Brillo</th>
+            <th class="text-center px-4 py-3">Origen</th>
             <th class="text-right px-4 py-3">Stock</th>
-            <th class="text-right px-4 py-3">Mín / Crítico</th>
             <th class="text-center px-4 py-3">Lotes</th>
             <th class="text-center px-4 py-3">Activo</th>
             <th></th>
@@ -66,17 +65,31 @@
                       title="{{ $p->hex_resuelto }}"></span>
               </td>
               <td class="px-4 py-3">
-                <div class="font-mono font-semibold">{{ $p->ral }}</div>
-                @if ($p->ral_nombre_oficial)
-                  <div class="text-xs text-slate-500">{{ $p->ral_nombre_oficial }}</div>
+                <div class="flex items-center gap-2">
+                  @if ($sigla = \App\Models\Producto::sigla($p->tipo_pintura))
+                    <span class="font-mono font-bold text-[0.65rem] tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
+                          title="{{ $p->tipo_pintura }}">{{ $sigla }}</span>
+                  @endif
+                  <span class="font-mono font-semibold">{{ $p->ral }}</span>
+                  @if ($p->ral_nombre_oficial)
+                    <span class="text-xs text-slate-500">{{ $p->ral_nombre_oficial }}</span>
+                  @endif
+                </div>
+                @if ($p->descripcion)
+                  <div class="text-xs text-slate-500 mt-0.5">{{ $p->descripcion }}</div>
                 @endif
               </td>
-              <td class="px-4 py-3">{{ $p->textura_nombre ?? '—' }}</td>
-              <td class="px-4 py-3 text-right tabular-nums">{{ $p->brillo_pct }}%</td>
-              <td class="px-4 py-3 text-right tabular-nums {{ $clase }}">{{ number_format($stock, 3) }} kg</td>
-              <td class="px-4 py-3 text-right tabular-nums text-slate-500 text-xs">
-                {{ number_format($p->stock_minimo_kg, 0) }} / {{ number_format($p->stock_critico_kg, 0) }}
+              <td class="px-4 py-3">{{ \App\Models\Producto::texturaLabelDe($p) ?? ($p->textura_nombre ?? '—') }}</td>
+              <td class="px-4 py-3 text-center">
+                @if ($bandera = \App\Models\Producto::BANDERAS[$p->origen ?? ''] ?? null)
+                  <span title="{{ \App\Models\Producto::ORIGENES[$p->origen] }}"
+                        class="inline-flex [&>svg]:inline-block [&>svg]:w-[22px] [&>svg]:h-[15px] [&>svg]:rounded-sm [&>svg]:shadow-[0_0_0_1px_rgba(0,0,0,.12)]">{!! $bandera !!}</span>
+                @else
+                  <span class="text-slate-300">—</span>
+                @endif
               </td>
+              <td class="px-4 py-3 text-right tabular-nums {{ $clase }}"
+                  title="Mínimo {{ number_format($p->stock_minimo_kg, 0) }} kg · crítico {{ number_format($p->stock_critico_kg, 0) }} kg">{{ number_format($stock, 3) }} kg</td>
               <td class="px-4 py-3 text-center text-slate-500 tabular-nums">{{ $p->lotes_count }}</td>
               <td class="px-4 py-3 text-center">
                 @if ($p->activo)
