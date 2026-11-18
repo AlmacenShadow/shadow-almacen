@@ -60,6 +60,9 @@
               </td>
               <td class="px-4 py-3">
                 <x-producto-resumen :p="$l" />
+                @if ($l->descripcion)
+                  <div class="text-xs text-slate-500 mt-0.5">{{ $l->descripcion }}</div>
+                @endif
               </td>
               <td class="px-4 py-3 text-right tabular-nums">{{ \Illuminate\Support\Carbon::parse($l->fecha_recepcion)->format('Y-m-d') }}</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">

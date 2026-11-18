@@ -43,7 +43,7 @@ class LoteController extends Controller
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
                 'productos.tipo_pintura', 'productos.acabado', 'productos.superficie',
-                'productos.textura_tipo', 'productos.metalizado', 'productos.origen',
+                'productos.textura_tipo', 'productos.metalizado', 'productos.origen', 'productos.descripcion',
                 'productos.hex_override',
                 'ral_catalogo.hex as ral_hex',
                 DB::raw('COALESCE(v_stock_lote.stock_kg, 0) as stock_kg'),
