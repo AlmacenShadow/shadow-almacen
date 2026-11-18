@@ -15,8 +15,19 @@ class Producto extends Model
 
     protected $fillable = [
         'ral',
+        'tipo_pintura',
+        'descripcion',
         'textura_id',
         'brillo_pct',
+        'acabado',
+        'superficie',
+        'textura_tipo',
+        'metalizado',
+        'origen',
+        'marca',
+        'referencia',
+        'curado_temp_c',
+        'curado_tiempo_min',
         'hex_override',
         'stock_minimo_kg',
         'stock_critico_kg',
@@ -25,6 +36,9 @@ class Producto extends Model
 
     protected $casts = [
         'brillo_pct'        => 'integer',
+        'metalizado'        => 'boolean',
+        'curado_temp_c'     => 'integer',
+        'curado_tiempo_min' => 'integer',
         'stock_minimo_kg'   => 'decimal:3',
         'stock_critico_kg'  => 'decimal:3',
         'activo'            => 'boolean',
@@ -32,6 +46,13 @@ class Producto extends Model
 
     /** Color por defecto cuando ni hex_override ni catálogo tienen valor. */
     public const HEX_FALLBACK = '#cbd5e1'; // slate-300
+
+    /** Catálogos de opciones (clave guardada => etiqueta mostrada). */
+    public const TIPOS_PINTURA = ['Epoxi', 'Poliéster', 'Híbrida (epoxi-poliéster)', 'Poliuretano', 'Poliéster superdurable'];
+    public const ACABADOS      = ['mate' => 'Mate', 'semibrillo' => 'Semibrillo', 'brillante' => 'Brillante'];
+    public const SUPERFICIES   = ['liso' => 'Liso', 'texturizado' => 'Texturizado'];
+    public const TEXTURA_TIPOS = ['martillado' => 'Martillado', 'granulado' => 'Granulado', 'cuero' => 'Cuero', 'arrugado' => 'Arrugado', 'piel_naranja' => 'Piel de naranja'];
+    public const ORIGENES      = ['china' => 'China', 'colombia' => 'Colombia', 'usa' => 'USA', 'panama' => 'Panamá'];
 
     public function textura(): BelongsTo
     {
@@ -78,10 +99,23 @@ class Producto extends Model
             ->value('nombre_oficial');
     }
 
+    /** Etiqueta compuesta de la textura estructurada: "Mate · Texturizado · Martillado · Metalizado". */
+    public function getTexturaLabelAttribute(): string
+    {
+        $partes = [];
+        if (!empty($this->acabado))    $partes[] = self::ACABADOS[$this->acabado] ?? $this->acabado;
+        if (!empty($this->superficie)) $partes[] = self::SUPERFICIES[$this->superficie] ?? $this->superficie;
+        if ($this->superficie === 'texturizado' && !empty($this->textura_tipo)) {
+            $partes[] = self::TEXTURA_TIPOS[$this->textura_tipo] ?? $this->textura_tipo;
+        }
+        if ($this->metalizado) $partes[] = 'Metalizado';
+
+        return $partes ? implode(' · ', $partes) : ($this->textura?->nombre ?? '—');
+    }
+
     public function getDescripcionCortaAttribute(): string
     {
-        $textura = $this->textura?->nombre ?? '?';
-        return "{$this->ral} · {$textura} · {$this->brillo_pct}%";
+        return "{$this->ral} · {$this->textura_label} · {$this->brillo_pct}%";
     }
 
     /** Como descripcion_corta pero con el nombre oficial del K7 intercalado. */
@@ -90,7 +124,7 @@ class Producto extends Model
         $partes = array_filter([
             $this->ral,
             $this->nombre_ral_oficial,
-            $this->textura?->nombre ?? '?',
+            $this->textura_label,
             "{$this->brillo_pct}%",
         ]);
 

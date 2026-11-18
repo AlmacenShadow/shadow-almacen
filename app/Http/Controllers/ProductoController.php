@@ -59,22 +59,15 @@ class ProductoController extends Controller
     {
         $this->autorizar();
 
-        $data = $this->validar($request);
+        $data = $this->normalizar($request);
 
-        $existe = Producto::where('ral', $data['ral'])
-            ->where('textura_id', $data['textura_id'])
-            ->where('brillo_pct', $data['brillo_pct'])
-            ->exists();
-        if ($existe) {
+        if ($this->duplicado($data)) {
             return back()->withErrors([
-                'ral' => 'Ya existe un producto con esta combinación de RAL + textura + brillo.'
+                'ral' => 'Ya existe un producto con estos mismos atributos (RAL, tipo, acabado, superficie, textura, metalizado y brillo).'
             ])->withInput();
         }
 
-        Producto::create([
-            ...$data,
-            'activo' => $request->boolean('activo'),
-        ]);
+        Producto::create([...$data, 'activo' => $request->boolean('activo')]);
 
         return redirect()->route('productos.index')->with('flash', 'Producto creado.');
     }
@@ -92,23 +85,15 @@ class ProductoController extends Controller
     {
         $this->autorizar();
 
-        $data = $this->validar($request);
+        $data = $this->normalizar($request);
 
-        $existe = Producto::where('ral', $data['ral'])
-            ->where('textura_id', $data['textura_id'])
-            ->where('brillo_pct', $data['brillo_pct'])
-            ->where('id', '!=', $producto->id)
-            ->exists();
-        if ($existe) {
+        if ($this->duplicado($data, $producto->id)) {
             return back()->withErrors([
-                'ral' => 'Ya existe otro producto con esta combinación.'
+                'ral' => 'Ya existe otro producto con estos mismos atributos.'
             ])->withInput();
         }
 
-        $producto->update([
-            ...$data,
-            'activo' => $request->boolean('activo'),
-        ]);
+        $producto->update([...$data, 'activo' => $request->boolean('activo')]);
 
         return redirect()->route('productos.index')->with('flash', 'Producto actualizado.');
     }
@@ -135,27 +120,79 @@ class ProductoController extends Controller
 
     // ---- helpers ----
 
-    /** Datos compartidos entre create y edit (texturas activas + catálogo K7). */
+    /** Datos compartidos entre create y edit (catálogo RAL K7). */
     private function datosDeFormulario(): array
     {
-        $texturas = Textura::where('activo', true)->orderBy('orden')->orderBy('nombre')->get();
         $ralCatalogo = DB::table('ral_catalogo')->orderBy('orden')->get();
-        return compact('texturas', 'ralCatalogo');
+        return compact('ralCatalogo');
     }
 
-    private function validar(Request $request): array
+    /** Valida, limpia y deriva la textura_id legacy a partir de los campos estructurados. */
+    private function normalizar(Request $request): array
     {
-        return $request->validate([
-            'ral'             => ['required', 'string', 'max:16'],
-            'textura_id'      => ['required', 'integer', Rule::exists('texturas', 'id')->where('activo', true)],
-            'brillo_pct'      => ['required', 'integer', 'min:0', 'max:100'],
-            'hex_override'    => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'stock_minimo_kg' => ['required', 'numeric', 'min:0'],
-            'stock_critico_kg'=> ['required', 'numeric', 'min:0'],
-            'activo'          => ['nullable'],
+        $data = $request->validate([
+            'ral'               => ['required', 'string', 'max:16'],
+            'tipo_pintura'      => ['nullable', Rule::in(Producto::TIPOS_PINTURA)],
+            'descripcion'       => ['nullable', 'string', 'max:255'],
+            'brillo_pct'        => ['required', 'integer', 'min:0', 'max:100'],
+            'acabado'           => ['required', Rule::in(array_keys(Producto::ACABADOS))],
+            'superficie'        => ['required', Rule::in(array_keys(Producto::SUPERFICIES))],
+            'textura_tipo'      => ['nullable', Rule::in(array_keys(Producto::TEXTURA_TIPOS)), 'required_if:superficie,texturizado'],
+            'origen'            => ['nullable', Rule::in(array_keys(Producto::ORIGENES))],
+            'marca'             => ['nullable', 'string', 'max:80'],
+            'referencia'        => ['nullable', 'string', 'max:80'],
+            'curado_temp_c'     => ['nullable', 'integer', 'min:0', 'max:400'],
+            'curado_tiempo_min' => ['nullable', 'integer', 'min:0', 'max:600'],
+            'hex_override'      => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'stock_minimo_kg'   => ['required', 'numeric', 'min:0'],
+            'stock_critico_kg'  => ['required', 'numeric', 'min:0'],
+            'activo'            => ['nullable'],
         ], [
-            'hex_override.regex' => 'El color debe estar en formato #RRGGBB (ej: #AB12FF).',
-            'textura_id.exists'  => 'La textura seleccionada no existe o está inactiva.',
+            'hex_override.regex'     => 'El color debe estar en formato #RRGGBB (ej: #AB12FF).',
+            'textura_tipo.required_if' => 'Si la superficie es texturizada, elige el tipo de textura.',
+            'acabado.required'       => 'Elige el acabado (mate, semibrillo o brillante).',
+            'superficie.required'    => 'Elige la superficie (lisa o texturizada).',
         ]);
+
+        $data['metalizado'] = $request->boolean('metalizado');
+        if ($data['superficie'] !== 'texturizado') {
+            $data['textura_tipo'] = null;
+        }
+        $data['textura_id'] = $this->derivarTexturaId($data);
+
+        return $data;
+    }
+
+    /** ¿Existe ya un producto con la misma identidad (null-aware)? */
+    private function duplicado(array $data, ?int $ignoreId = null): bool
+    {
+        $q = Producto::query();
+        foreach (['ral', 'tipo_pintura', 'acabado', 'superficie', 'textura_tipo', 'brillo_pct'] as $c) {
+            $v = $data[$c] ?? null;
+            is_null($v) ? $q->whereNull($c) : $q->where($c, $v);
+        }
+        $q->where('metalizado', $data['metalizado']);
+        if ($ignoreId) {
+            $q->where('id', '!=', $ignoreId);
+        }
+        return $q->exists();
+    }
+
+    /**
+     * Deriva la textura_id legacy (una sola palabra, para vistas/PDF que aún la usan)
+     * a partir de los atributos estructurados, priorizando lo más distintivo.
+     */
+    private function derivarTexturaId(array $data): int
+    {
+        if (($data['superficie'] ?? '') === 'texturizado' && !empty($data['textura_tipo'])) {
+            $nombre = Producto::TEXTURA_TIPOS[$data['textura_tipo']] ?? 'Texturizado';
+        } elseif (!empty($data['metalizado'])) {
+            $nombre = 'Metálico';
+        } elseif (($data['superficie'] ?? '') === 'texturizado') {
+            $nombre = 'Texturizado';
+        } else {
+            $nombre = Producto::ACABADOS[$data['acabado'] ?? 'mate'] ?? 'Mate';
+        }
+        return Textura::firstOrCreate(['nombre' => $nombre], ['orden' => 100, 'activo' => true])->id;
     }
 }
