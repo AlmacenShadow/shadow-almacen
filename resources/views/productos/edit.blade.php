@@ -5,7 +5,7 @@
   <div class="mb-5">
     <h2 class="text-2xl font-bold text-slate-900">Editar producto</h2>
     <p class="text-sm text-slate-500 font-mono">
-      {{ $producto->ral }} · {{ $producto->textura?->nombre ?? '?' }} · {{ $producto->brillo_pct }}%
+      <x-producto-resumen :p="$producto" small />
     </p>
   </div>
 

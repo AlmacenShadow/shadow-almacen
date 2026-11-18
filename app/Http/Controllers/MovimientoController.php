@@ -58,6 +58,8 @@ class MovimientoController extends Controller
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
+                'productos.tipo_pintura', 'productos.acabado', 'productos.superficie',
+                'productos.textura_tipo', 'productos.metalizado', 'productos.origen',
                 'ma.descripcion as motivo_descripcion',
                 'ma.signo as motivo_signo',
                 'orig.id as original_id',

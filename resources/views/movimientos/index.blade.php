@@ -117,9 +117,7 @@
               <td class="px-5 py-3">
                 <a href="{{ route('lotes.show', $m->lote_id) }}"
                    class="font-mono text-amber-600 hover:underline">{{ $m->lote_codigo }}</a>
-                <div class="text-xs text-slate-500">
-                  {{ $m->ral }} · {{ $m->textura }} · {{ $m->brillo_pct }}%
-                </div>
+                <div><x-producto-resumen :p="$m" small /></div>
               </td>
               <td class="px-5 py-3 text-right whitespace-nowrap">
                 <span class="font-semibold tabular-nums {{ $pesoClase }}">

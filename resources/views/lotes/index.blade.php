@@ -51,7 +51,7 @@
               </td>
               <td class="px-4 py-3 font-mono">{{ $l->codigo_barcode }}</td>
               <td class="px-4 py-3">
-                <div class="font-medium">{{ $l->ral }} · {{ $l->textura }} · {{ $l->brillo_pct }}%</div>
+                <x-producto-resumen :p="$l" />
               </td>
               <td class="px-4 py-3 text-right tabular-nums">{{ \Illuminate\Support\Carbon::parse($l->fecha_recepcion)->format('Y-m-d') }}</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500">

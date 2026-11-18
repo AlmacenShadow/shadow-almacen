@@ -40,12 +40,7 @@
     $r->codigo => ['nombre' => $r->nombre_oficial, 'hex' => $r->hex]
   ])->toArray();
 
-  $banderas = [
-    'china'    => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#de2910"/><polygon points="7,4 7.9,6.5 10.5,6.5 8.4,8.1 9.2,10.6 7,9 4.8,10.6 5.6,8.1 3.5,6.5 6.1,6.5" fill="#ffde00"/></svg>',
-    'colombia' => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fcd116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#ce1126"/></svg>',
-    'usa'      => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#ffffff"/><g fill="#b22234"><rect width="30" height="2"/><rect y="4" width="30" height="2"/><rect y="8" width="30" height="2"/><rect y="12" width="30" height="2"/><rect y="16" width="30" height="2"/></g><rect width="12" height="11" fill="#3c3b6e"/></svg>',
-    'panama'   => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#ffffff"/><rect x="15" width="15" height="10" fill="#d21034"/><rect y="10" width="15" height="10" fill="#005293"/><polygon points="7.5,2.5 8.3,4.8 10.8,4.8 8.8,6.3 9.5,8.7 7.5,7.2 5.5,8.7 6.2,6.3 4.2,4.8 6.7,4.8" fill="#005293"/><polygon points="22.5,12.5 23.3,14.8 25.8,14.8 23.8,16.3 24.5,18.7 22.5,17.2 20.5,18.7 21.2,16.3 19.2,14.8 21.7,14.8" fill="#d21034"/></svg>',
-  ];
+  $banderas = \App\Models\Producto::BANDERAS;
 @endphp
 
 <style>
@@ -286,6 +281,7 @@
   const TEXTURAS    = @json(\App\Models\Producto::TEXTURA_TIPOS);
   const ORIGENES    = @json(\App\Models\Producto::ORIGENES);
   const BANDERAS    = @json($banderas);
+  const SIGLAS      = @json(\App\Models\Producto::TIPO_SIGLAS);
   const FALLBACK    = '#cbd5e1';
 
   const form  = document.getElementById('form-producto');
@@ -328,12 +324,11 @@
       : (code ? '⚠ no está en el catálogo K7 — usa color personalizado' : '— elige uno del catálogo o escribe libre —');
 
     const tipo = $('tipo_pintura').value;
-    $('pv-tipo').textContent = tipo || '—';
+    $('pv-tipo').textContent = tipo ? `${SIGLAS[tipo]} · ${tipo}` : '—';
     $('pv-desc').textContent = $('descripcion').value || '—';
 
     const tx = texturaLabel();
-    const brillo = $('brillo_pct').value;
-    $('pv-textura').textContent = tx.length ? tx.join(' · ') + (brillo ? ` · ${brillo}%` : '') : '—';
+    $('pv-textura').textContent = tx.length ? tx.join(' · ') : '—';
 
     const org = radio('origen');
     $('pv-origen').innerHTML = org ? (BANDERAS[org] || '') + ORIGENES[org] : '—';
@@ -342,9 +337,14 @@
     const t = $('curado_temp_c').value, m = $('curado_tiempo_min').value;
     $('pv-curado').textContent = [t ? `${t} °C` : '', m ? `${m} min` : ''].filter(Boolean).join(' · ') || '—';
 
-    const resumen = [tipo, code].concat(tx).filter(Boolean).join(' · ');
+    // Resumen = mismo criterio que el componente producto-resumen (Producto::acabadoCorto):
+    // sigla · RAL · acabado (+ textura si es texturizado, + metalizado) · bandera. Sin brillo %.
+    const corto = [ACABADOS[radio('acabado')]];
+    if (texturizado) corto.push(TEXTURAS[radio('textura_tipo')] || 'Texturizado');
+    if (radio('metalizado') === '1') corto.push('Metalizado');
+    const resumen = [SIGLAS[tipo] || '', code].concat(corto).filter(Boolean).join(' · ');
     $('pv-summary').innerHTML = '<span class="text-slate-500 font-normal">Resumen:</span> '
-      + (resumen || '—') + (org ? ' · ' + (BANDERAS[org] || '') + ORIGENES[org] : '');
+      + (resumen || '—') + (org ? ' ' + (BANDERAS[org] || '') : '');
   }
 
   // Origen es opcional: tocar la píldora ya marcada la desmarca
