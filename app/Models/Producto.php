@@ -147,9 +147,11 @@ class Producto extends Model
     {
         $partes = [];
         if (!empty($this->acabado))    $partes[] = self::ACABADOS[$this->acabado] ?? $this->acabado;
-        if (!empty($this->superficie)) $partes[] = self::SUPERFICIES[$this->superficie] ?? $this->superficie;
+        // Si es texturizado con tipo, basta el tipo ("Martillado"), sin la palabra "Texturizado".
         if ($this->superficie === 'texturizado' && !empty($this->textura_tipo)) {
             $partes[] = self::TEXTURA_TIPOS[$this->textura_tipo] ?? $this->textura_tipo;
+        } elseif (!empty($this->superficie)) {
+            $partes[] = self::SUPERFICIES[$this->superficie] ?? $this->superficie;
         }
         if ($this->metalizado) $partes[] = 'Metalizado';
 

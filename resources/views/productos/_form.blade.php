@@ -299,8 +299,8 @@
   // Mismo criterio que Producto::getTexturaLabelAttribute()
   function texturaLabel() {
     const sup = radio('superficie');
-    const partes = [ACABADOS[radio('acabado')], SUPERFICIES[sup]];
-    if (sup === 'texturizado' && radio('textura_tipo')) partes.push(TEXTURAS[radio('textura_tipo')]);
+    const tt = sup === 'texturizado' ? radio('textura_tipo') : '';
+    const partes = [ACABADOS[radio('acabado')], tt ? TEXTURAS[tt] : SUPERFICIES[sup]];
     if (radio('metalizado') === '1') partes.push('Metalizado');
     return partes.filter(Boolean);
   }
