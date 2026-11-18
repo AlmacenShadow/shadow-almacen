@@ -49,7 +49,15 @@
                       style="background-color: {{ $l->hex_resuelto ?? '#cbd5e1' }}"
                       title="{{ $l->hex_resuelto ?? '' }}"></span>
               </td>
-              <td class="px-4 py-3 font-mono">{{ $l->codigo_barcode }}</td>
+              <td class="px-4 py-3 font-mono whitespace-nowrap">
+                {{ $l->codigo_barcode }}
+                @if ($l->propietario_externo)
+                  <x-propietario-alerta :nombre="$l->propietario_nombre" class="w-4 h-4 ml-1" />
+                @endif
+                @if ($l->notas)
+                  <span class="cursor-help text-slate-400 ml-1" title="{{ $l->notas }}">📝</span>
+                @endif
+              </td>
               <td class="px-4 py-3">
                 <x-producto-resumen :p="$l" />
               </td>

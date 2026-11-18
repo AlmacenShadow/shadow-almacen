@@ -147,6 +147,7 @@ class ProductoController extends Controller
             'stock_minimo_kg'   => ['required', 'numeric', 'min:0'],
             'stock_critico_kg'  => ['required', 'numeric', 'min:0'],
             'activo'            => ['nullable'],
+            'notas'             => ['nullable', 'string', 'max:2000'],
         ], [
             'hex_override.regex'     => 'El color debe estar en formato #RRGGBB (ej: #AB12FF).',
             'textura_tipo.required_if' => 'Si la superficie es texturizada, elige el tipo de textura.',

@@ -32,6 +32,7 @@ class Producto extends Model
         'stock_minimo_kg',
         'stock_critico_kg',
         'activo',
+        'notas',
     ];
 
     protected $casts = [

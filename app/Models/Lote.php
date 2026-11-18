@@ -27,6 +27,9 @@ class Lote extends Model
         'origen',
         'recepcionado_por_id',
         'codigo_barcode',
+        'propietario_externo',
+        'propietario_nombre',
+        'notas',
     ];
 
     protected $casts = [
@@ -35,6 +38,7 @@ class Lote extends Model
         'peso_total_recepcionado_kg'  => 'decimal:3',
         'peso_tara_unitario_kg'       => 'decimal:3',
         'cantidad_cajas'              => 'integer',
+        'propietario_externo'         => 'boolean',
     ];
 
     public function producto(): BelongsTo

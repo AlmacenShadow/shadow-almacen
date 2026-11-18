@@ -36,6 +36,9 @@ class LoteController extends Controller
                 'lotes.peso_total_recepcionado_kg',
                 'lotes.cantidad_cajas',
                 'lotes.proveedor',
+                'lotes.propietario_externo',
+                'lotes.propietario_nombre',
+                'lotes.notas',
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
@@ -67,6 +70,24 @@ class LoteController extends Controller
         return view('lotes.create', compact('productos'));
     }
 
+    /** Notas y propietario externo: editables siempre, haya o no movimientos. */
+    private const REGLAS_EXTRA = [
+        'notas'               => ['nullable', 'string', 'max:2000'],
+        'propietario_externo' => ['nullable'],
+        'propietario_nombre'  => ['nullable', 'required_if_accepted:propietario_externo', 'string', 'max:120'],
+    ];
+
+    private const MENSAJES_EXTRA = [
+        'propietario_nombre.required_if_accepted' => 'Si el lote es de un propietario externo, escribe su nombre.',
+    ];
+
+    private static function normalizarExtra(Request $request, array $data): array
+    {
+        $data['propietario_externo'] = $request->boolean('propietario_externo');
+        if (! $data['propietario_externo']) $data['propietario_nombre'] = null;
+        return $data;
+    }
+
     /** Persiste el lote nuevo y genera su codigo_barcode definitivo. */
     public function store(Request $request): RedirectResponse
     {
@@ -79,7 +100,9 @@ class LoteController extends Controller
             'cantidad_cajas'             => ['required', 'integer', 'min:1'],
             'proveedor'                  => ['nullable', 'string', 'max:120'],
             'factura'                    => ['nullable', 'string', 'max:60'],
-        ]);
+            ...self::REGLAS_EXTRA,
+        ], self::MENSAJES_EXTRA);
+        $data = self::normalizarExtra($request, $data);
 
         $lote = DB::transaction(function () use ($data) {
             $lote = Lote::create([
@@ -191,6 +214,7 @@ class LoteController extends Controller
             'proveedor'         => ['nullable', 'string', 'max:120'],
             'factura'           => ['nullable', 'string', 'max:60'],
             'fecha_vencimiento' => ['nullable', 'date', 'after:fecha_recepcion'],
+            ...self::REGLAS_EXTRA,
         ];
 
         if (! $tieneMovimientos) {
@@ -203,7 +227,7 @@ class LoteController extends Controller
             ]);
         }
 
-        $data = $request->validate($rules);
+        $data = self::normalizarExtra($request, $request->validate($rules, self::MENSAJES_EXTRA));
         $lote->update($data);
 
         return redirect()

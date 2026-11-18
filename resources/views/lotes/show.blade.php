@@ -8,7 +8,12 @@
             style="background-color: {{ $lote->producto->hex }}"
             title="{{ $lote->producto->hex }}"></span>
       <div>
-        <h2 class="text-2xl font-bold text-slate-900">{{ $lote->codigo_barcode }}</h2>
+        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          {{ $lote->codigo_barcode }}
+          @if ($lote->propietario_externo)
+            <x-propietario-alerta :nombre="$lote->propietario_nombre" class="w-6 h-6" />
+          @endif
+        </h2>
         <p class="text-sm text-slate-500">
           {{ $lote->producto->descripcion_corta }}
           @if ($lote->producto->nombre_ral_oficial)
@@ -33,6 +38,14 @@
       <dl class="grid grid-cols-2 gap-y-3 text-sm">
         <dt class="text-slate-500">Producto</dt>
         <dd class="font-semibold">{{ $lote->producto->descripcion_corta }}</dd>
+
+        @if ($lote->propietario_externo)
+          <dt class="text-slate-500">Propietario externo</dt>
+          <dd class="font-semibold flex items-center gap-1.5">
+            <x-propietario-alerta :nombre="$lote->propietario_nombre" class="w-4 h-4" />
+            {{ $lote->propietario_nombre }}
+          </dd>
+        @endif
 
         <dt class="text-slate-500">Fecha de recepción</dt>
         <dd>{{ $lote->fecha_recepcion->format('Y-m-d') }}</dd>
@@ -61,6 +74,12 @@
         <dt class="text-slate-500">Recepcionado por</dt>
         <dd>{{ $lote->recepcionadoPor->nombre }}</dd>
       </dl>
+      @if ($lote->notas)
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Notas</div>
+          <p class="text-sm text-slate-700 whitespace-pre-line">{{ $lote->notas }}</p>
+        </div>
+      @endif
     </div>
 
     <!-- Etiqueta para imprimir / recortar -->

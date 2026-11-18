@@ -225,6 +225,14 @@
       </div>
     </div>
 
+    {{-- ===== Notas ===== --}}
+    <div class="pf-card">
+      <p class="pf-st">Notas</p>
+      <p class="pf-sd">Cualquier observación sobre este producto.</p>
+      <textarea id="notas" name="notas" rows="3" maxlength="2000" class="pf-in"
+                placeholder="Ej: pedir con 2 semanas de anticipación, usar solo en exteriores…">{{ old('notas', $isEdit ? $producto->notas : '') }}</textarea>
+    </div>
+
     {{-- ===== Inventario (no estaba en el mockup, el sistema lo necesita) ===== --}}
     <div class="pf-card">
       <p class="pf-st">Inventario</p>
