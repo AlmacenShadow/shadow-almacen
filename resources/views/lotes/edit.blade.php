@@ -109,14 +109,12 @@
     <div class="flex justify-between items-center pt-4 border-t border-slate-100">
       <div>
         @if ($sinMovimientos)
-          <form method="POST" action="{{ route('lotes.destroy', $lote) }}" class="inline"
-                onsubmit="return confirm('¿Borrar definitivamente el lote {{ $lote->codigo_barcode }}? Esta acción no se puede deshacer.');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="text-red-600 hover:text-red-700 text-sm hover:underline">
-              Eliminar lote
-            </button>
-          </form>
+          {{-- El form de borrar vive FUERA del form principal (abajo); este botón
+               lo apunta con form="...". Anidar forms hacía que "Guardar cambios"
+               enviara _method=DELETE y borrara el lote. --}}
+          <button type="submit" form="form-borrar-lote" class="text-red-600 hover:text-red-700 text-sm hover:underline">
+            Eliminar lote
+          </button>
         @else
           <span class="text-xs text-slate-400 cursor-help"
                 title="No se puede borrar un lote con movimientos asociados">
@@ -132,4 +130,12 @@
       </div>
     </div>
   </form>
+
+  @if ($sinMovimientos)
+    <form method="POST" action="{{ route('lotes.destroy', $lote) }}" id="form-borrar-lote" class="hidden"
+          onsubmit="return confirm('¿Borrar definitivamente el lote {{ $lote->codigo_barcode }}? Esta acción no se puede deshacer.');">
+      @csrf
+      @method('DELETE')
+    </form>
+  @endif
 @endsection
