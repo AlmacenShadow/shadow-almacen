@@ -5,7 +5,7 @@
   <div class="flex items-center justify-between mb-5">
     <div>
       <h2 class="text-2xl font-bold text-slate-900">Productos</h2>
-      <p class="text-sm text-slate-500">Cada combinación de RAL + textura + brillo es un producto distinto.</p>
+      <p class="text-sm text-slate-500">Cada combinación de RAL, tipo, textura y brillo es un producto distinto.</p>
     </div>
     <div class="flex items-center gap-2">
       <a href="{{ route('catalogo-ral.index') }}" target="_blank"
