@@ -13,15 +13,17 @@ class Anomalias
         'lote_ajeno'             => 'Usó una caja de propietario externo',
         'lote_vencido'           => 'Usó un lote vencido',
         'autorizacion_invalida'  => 'La autorización no es válida (quien autorizó no es encargado/admin activo)',
+        'caja_nueva_con_abierta' => 'Abrió una caja nueva habiendo otra abierta del mismo lote',
+        'caja_no_cerrada'        => 'La caja no se devolvió al terminarla (se informó después)',
         'retorno_sin_salida'     => 'Retorno sin salida previa del mismo pintor',
         'retorno_excede_salida'  => 'Devolvió más peso del que sacó',
     ];
 
     /** Las que la tablet puede informar. */
-    public const DE_TABLET = ['fifo_override', 'lote_ajeno', 'lote_vencido'];
+    public const DE_TABLET = ['fifo_override', 'lote_ajeno', 'lote_vencido', 'caja_nueva_con_abierta', 'caja_no_cerrada'];
 
     /** Las que exigen autorización de un superior. */
-    public const REQUIEREN_AUTORIZACION = ['fifo_override', 'lote_ajeno'];
+    public const REQUIEREN_AUTORIZACION = ['fifo_override', 'lote_ajeno', 'caja_nueva_con_abierta'];
 
     public static function lista(?string $csv): array
     {

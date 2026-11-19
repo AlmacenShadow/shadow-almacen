@@ -7,6 +7,7 @@ use App\Models\Lote;
 use App\Models\Movimiento;
 use App\Models\Producto;
 use App\Support\Anomalias;
+use App\Support\Cajas;
 use App\Support\Catalogo;
 use App\Support\OrdenDeUso;
 use App\Support\Vencimiento;
@@ -59,6 +60,8 @@ class TabletController extends Controller
             ->get()
             ->map(fn ($p) => self::enriquecer($p));
 
+        $cajas = Cajas::estadoPorLote();
+
         // Incluimos TODOS los lotes (incluso con stock 0) porque la tablet
         // necesita poder hacer retornos sobre lotes que se vaciaron.
         $lotes = DB::table('lotes')
@@ -89,8 +92,13 @@ class TabletController extends Controller
             )
             ->orderBy('lotes.fecha_recepcion')
             ->get()
-            ->map(function ($l) {
+            ->map(function ($l) use (&$cajas) {
                 $l->propietario_externo = (bool) $l->propietario_externo;
+                // Vigilante de caja abierta: la tablet aplica su cola local encima de esto
+                $e = $cajas[$l->id] ?? Cajas::estadoVacio();
+                $l->caja_abierta_kg       = $e['caja_abierta'];
+                $l->cajas_fuera           = $e['fuera'];
+                $l->vigilante_desactivado = $e['desactivado'];
                 return self::enriquecer($l);
             });
 
@@ -208,7 +216,8 @@ class TabletController extends Controller
             'lote_codigo'    => ['required', 'string', 'exists:lotes,codigo_barcode'],
             'usuario_codigo' => ['required', 'string', 'exists:usuarios,codigo_barcode'],
             'tipo'           => ['required', 'in:salida,retorno'],
-            'peso_kg'        => ['required', 'numeric', 'min:0.001'],
+            // 0 solo tiene sentido en retornos: "caja terminada" (cierra la caja)
+            'peso_kg'        => ['required', 'numeric', 'min:0'],
             'peso_manual'    => ['boolean'],
             'sync_uuid'      => ['required', 'uuid'],
             'device_id'      => ['nullable', 'string', 'max:40'],
@@ -220,6 +229,7 @@ class TabletController extends Controller
             'anomalias.*'         => ['string', 'in:' . implode(',', Anomalias::DE_TABLET)],
             'autorizador_codigo'  => ['nullable', 'string', 'max:40'],
             'autorizacion_motivo' => ['nullable', 'string', 'max:1000'],
+            'nota'                => ['nullable', 'string', 'max:500'],
         ]);
 
         // ¿Ya nos llegó este movimiento antes? (reintento). Devolvemos OK sin duplicar.
@@ -243,6 +253,12 @@ class TabletController extends Controller
         if ($datos['tipo'] === 'salida') {
             if ($lote->propietario_externo) $tipos[] = 'lote_ajeno';
             if (Vencimiento::vencido($lote->fecha_vencimiento)) $tipos[] = 'lote_vencido';
+            // Vigilante: caja nueva con otra abierta (si el seguimiento está activo)
+            $e = Cajas::estadoDeLote($lote->id);
+            if (!$e['desactivado'] && $e['caja_abierta'] !== null && count($e['fuera']) === 0
+                && Cajas::esCajaNueva((float) $datos['peso_kg'], (float) $e['caja_abierta'])) {
+                $tipos[] = 'caja_nueva_con_abierta';
+            }
         }
 
         // Autorización de un superior (encargado/admin activo). Si no es válida NO se
@@ -287,6 +303,7 @@ class TabletController extends Controller
             'peso_manual'    => $datos['peso_manual'] ?? false,
             'anomalia'       => $anomalia,
             'tipo_anomalia'  => $tipoAnomal,
+            'nota_texto'     => $datos['nota'] ?? null,
             'autorizado_por_id'   => $autorizador?->id,
             'autorizacion_motivo' => $autorizador || ! empty($datos['autorizador_codigo'])
                 ? ($datos['autorizacion_motivo'] ?? null) : null,
