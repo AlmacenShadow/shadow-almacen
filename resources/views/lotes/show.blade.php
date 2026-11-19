@@ -51,7 +51,7 @@
         <dd>@fecha($lote->fecha_recepcion)</dd>
 
         <dt class="text-slate-500">Fecha de vencimiento</dt>
-        <dd>@fecha($lote->fecha_vencimiento)</dd>
+        <dd class="text-left [&>span]:items-start"><x-vencimiento :fecha="$lote->fecha_vencimiento" detalle /></dd>
 
         <dt class="text-slate-500">Cantidad de cajas</dt>
         <dd class="tabular-nums">{{ $lote->cantidad_cajas }}</dd>
@@ -285,7 +285,7 @@
               @endif
               @if ($m->anomalia)
                 <span class="ml-1 inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-900"
-                      title="Anomalía: {{ $m->tipo_anomalia ?? 'sin detalle' }}">⚠</span>
+                      title="Anomalía: {{ implode(' · ', \App\Support\Anomalias::etiquetas($m->tipo_anomalia)) ?: 'sin detalle' }}">⚠</span>
               @endif
             </td>
             <td class="px-5 py-3">
@@ -314,7 +314,8 @@
               @if ($m->nota_texto)
                 <div class="text-xs text-slate-500">{{ \Illuminate\Support\Str::limit($m->nota_texto, 100) }}</div>
               @endif
-              @if (!$m->motivo_descripcion && !$m->nota_texto)
+              <x-movimiento-anomalias :m="$m" />
+              @if (!$m->motivo_descripcion && !$m->nota_texto && !$m->tipo_anomalia && !$m->autorizacion_motivo)
                 <span class="text-slate-300">—</span>
               @endif
             </td>

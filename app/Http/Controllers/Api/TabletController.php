@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Lote;
 use App\Models\Movimiento;
 use App\Models\Producto;
+use App\Support\Anomalias;
 use App\Support\Catalogo;
+use App\Support\OrdenDeUso;
+use App\Support\Vencimiento;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -149,17 +152,8 @@ class TabletController extends Controller
             return response()->json(['error' => 'Lote no encontrado'], 404);
         }
 
-        // Buscamos un lote más antiguo del mismo producto que aún tenga stock.
-        // Es la regla FIFO: si hay uno más viejo con material, debería usarse primero.
-        $loteAnterior = DB::table('lotes')
-            ->join('v_stock_lote', 'v_stock_lote.lote_id', '=', 'lotes.id')
-            ->where('lotes.producto_id', $lote->producto_id)
-            ->where('lotes.id', '!=', $lote->id)
-            ->where('lotes.fecha_recepcion', '<', $lote->fecha_recepcion)
-            ->where('v_stock_lote.stock_kg', '>', 0)
-            ->orderBy('lotes.fecha_recepcion')
-            ->select('lotes.codigo_barcode', 'lotes.fecha_recepcion', 'v_stock_lote.stock_kg')
-            ->first();
+        // Lote de Shadow que debería usarse antes (regla por vencimiento, ver OrdenDeUso)
+        $loteAnterior = OrdenDeUso::loteAnterior($lote);
 
         return response()->json([
             'lote' => [
@@ -197,6 +191,7 @@ class TabletController extends Controller
             'aviso_fifo' => $loteAnterior ? [
                 'codigo_barcode'  => $loteAnterior->codigo_barcode,
                 'fecha_recepcion' => $loteAnterior->fecha_recepcion,
+                'fecha_vencimiento' => $loteAnterior->fecha_vencimiento,
                 'stock_kg'        => (float) $loteAnterior->stock_kg,
             ] : null,
         ]);
@@ -218,8 +213,13 @@ class TabletController extends Controller
             'sync_uuid'      => ['required', 'uuid'],
             'device_id'      => ['nullable', 'string', 'max:40'],
             'device_at'      => ['nullable', 'date'],
-            // Si la tablet decidió ignorar el aviso FIFO, nos lo dice
+            // Versiones <= 0.7.6: si el pintor ignoró el aviso FIFO
             'override_fifo'  => ['boolean'],
+            // Desde 0.7.7: avisos que se saltó + autorización de un superior
+            'anomalias'           => ['nullable', 'array'],
+            'anomalias.*'         => ['string', 'in:' . implode(',', Anomalias::DE_TABLET)],
+            'autorizador_codigo'  => ['nullable', 'string', 'max:40'],
+            'autorizacion_motivo' => ['nullable', 'string', 'max:1000'],
         ]);
 
         // ¿Ya nos llegó este movimiento antes? (reintento). Devolvemos OK sin duplicar.
@@ -235,13 +235,26 @@ class TabletController extends Controller
         $lote    = Lote::where('codigo_barcode', $datos['lote_codigo'])->firstOrFail();
         $usuario = Usuario::where('codigo_barcode', $datos['usuario_codigo'])->firstOrFail();
 
-        $anomalia    = false;
-        $tipoAnomal  = null;
-
-        // Anomalía 1: el pintor sacó polvo ignorando el aviso FIFO
+        // Anomalías: las que informa la tablet + las que el servidor detecta solo.
+        $tipos = $datos['anomalias'] ?? [];
         if (! empty($datos['override_fifo'])) {
-            $anomalia    = true;
-            $tipoAnomal  = 'fifo_override';
+            $tipos[] = 'fifo_override';
+        }
+        if ($datos['tipo'] === 'salida') {
+            if ($lote->propietario_externo) $tipos[] = 'lote_ajeno';
+            if (Vencimiento::vencido($lote->fecha_vencimiento)) $tipos[] = 'lote_vencido';
+        }
+
+        // Autorización de un superior (encargado/admin activo). Si no es válida NO se
+        // rechaza el movimiento: el polvo ya salió y la tablet descartaría el registro.
+        // Se guarda igual y se marca la anomalía 'autorizacion_invalida'.
+        $autorizador = null;
+        if (! empty($datos['autorizador_codigo'])) {
+            $autorizador = Usuario::where('codigo_barcode', $datos['autorizador_codigo'])
+                ->where('activo', true)
+                ->whereIn('rol', ['encargado', 'admin'])
+                ->first();
+            if (! $autorizador) $tipos[] = 'autorizacion_invalida';
         }
 
         // Anomalía 2: devolvió más peso del que se llevó. No bloqueamos, solo marcamos.
@@ -257,13 +270,14 @@ class TabletController extends Controller
                 ->first();
 
             if (! $ultimaSalida) {
-                $anomalia   = true;
-                $tipoAnomal = $tipoAnomal ?? 'retorno_sin_salida';
+                $tipos[] = 'retorno_sin_salida';
             } elseif ($datos['peso_kg'] > $ultimaSalida->peso_kg + 0.01) {
-                $anomalia   = true;
-                $tipoAnomal = $tipoAnomal ?? 'retorno_excede_salida';
+                $tipos[] = 'retorno_excede_salida';
             }
         }
+
+        $tipoAnomal = Anomalias::aCsv($tipos);
+        $anomalia   = $tipoAnomal !== null;
 
         $mov = Movimiento::create([
             'lote_id'        => $lote->id,
@@ -273,6 +287,9 @@ class TabletController extends Controller
             'peso_manual'    => $datos['peso_manual'] ?? false,
             'anomalia'       => $anomalia,
             'tipo_anomalia'  => $tipoAnomal,
+            'autorizado_por_id'   => $autorizador?->id,
+            'autorizacion_motivo' => $autorizador || ! empty($datos['autorizador_codigo'])
+                ? ($datos['autorizacion_motivo'] ?? null) : null,
             'sync_uuid'      => $datos['sync_uuid'],
             'device_id'      => $datos['device_id'] ?? null,
             // La tablet manda toISOString(), que siempre es UTC. Sin convertir,

@@ -38,6 +38,7 @@ class MovimientoController extends Controller
             ->leftJoin('texturas', 'texturas.id', '=', 'productos.textura_id')
             ->leftJoin('usuarios', 'usuarios.id', '=', 'm.usuario_id')
             ->leftJoin('motivos_ajuste as ma', 'ma.id', '=', 'm.motivo_ajuste_id')
+            ->leftJoin('usuarios as aut', 'aut.id', '=', 'm.autorizado_por_id')
             ->leftJoin('movimientos as orig', 'orig.id', '=', 'm.corrige_movimiento_id')
             // existe otro movimiento que corrige a este?
             ->leftJoin('movimientos as corr', 'corr.corrige_movimiento_id', '=', 'm.id')
@@ -49,6 +50,8 @@ class MovimientoController extends Controller
                 'm.peso_manual',
                 'm.anomalia',
                 'm.tipo_anomalia',
+                'm.autorizacion_motivo',
+                'aut.nombre as autorizador_nombre',
                 'm.nota_texto',
                 'm.corrige_movimiento_id',
                 'usuarios.nombre as usuario_nombre',

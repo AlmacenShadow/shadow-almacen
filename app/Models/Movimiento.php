@@ -21,6 +21,8 @@ class Movimiento extends Model
         'nota_texto',
         'anomalia',
         'tipo_anomalia',
+        'autorizado_por_id',
+        'autorizacion_motivo',
         'sync_uuid',
         'device_id',
         'device_at',
@@ -35,6 +37,7 @@ class Movimiento extends Model
 
     public function lote(): BelongsTo         { return $this->belongsTo(Lote::class); }
     public function usuario(): BelongsTo      { return $this->belongsTo(Usuario::class); }
+    public function autorizadoPor(): BelongsTo { return $this->belongsTo(Usuario::class, 'autorizado_por_id'); }
     public function motivoAjuste(): BelongsTo { return $this->belongsTo(\App\Models\MotivoAjuste::class, 'motivo_ajuste_id'); }
 
     /** El movimiento ORIGINAL que este movimiento está corrigiendo (si es una corrección). */

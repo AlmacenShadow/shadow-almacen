@@ -66,7 +66,7 @@
               </td>
               <td class="px-4 py-3 text-right tabular-nums" data-v="{{ substr($l->fecha_recepcion, 0, 10) }}">@fecha($l->fecha_recepcion)</td>
               <td class="px-4 py-3 text-right tabular-nums text-slate-500" data-v="{{ substr((string) $l->fecha_vencimiento, 0, 10) }}">
-                @fecha($l->fecha_vencimiento)
+                <x-vencimiento :fecha="$l->fecha_vencimiento" detalle />
               </td>
               <td class="px-4 py-3 text-right tabular-nums" data-v="{{ $l->cantidad_cajas }}">{{ $l->cantidad_cajas }}</td>
               <td class="px-4 py-3 text-right tabular-nums" data-v="{{ (float) $l->peso_total_recepcionado_kg }}">@kg($l->peso_total_recepcionado_kg) kg</td>

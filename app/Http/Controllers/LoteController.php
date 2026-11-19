@@ -130,6 +130,7 @@ class LoteController extends Controller
         $movimientos = DB::table('movimientos as m')
             ->leftJoin('usuarios', 'usuarios.id', '=', 'm.usuario_id')
             ->leftJoin('motivos_ajuste as ma', 'ma.id', '=', 'm.motivo_ajuste_id')
+            ->leftJoin('usuarios as aut', 'aut.id', '=', 'm.autorizado_por_id')
             // existe otro movimiento que corrige a este?
             ->leftJoin('movimientos as corr', 'corr.corrige_movimiento_id', '=', 'm.id')
             ->where('m.lote_id', $lote->id)
@@ -142,6 +143,8 @@ class LoteController extends Controller
                 'm.peso_manual',
                 'm.anomalia',
                 'm.tipo_anomalia',
+                'm.autorizacion_motivo',
+                'aut.nombre as autorizador_nombre',
                 'm.nota_texto',
                 'm.corrige_movimiento_id',
                 'usuarios.nombre as usuario_nombre',
