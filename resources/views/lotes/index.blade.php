@@ -20,17 +20,17 @@
         <p class="text-sm mt-2">Empieza con una <a href="{{ route('lotes.create') }}" class="text-amber-600 underline">nueva recepción</a>.</p>
       </div>
     @else
-      <table class="w-full text-sm">
+      <table class="w-full text-sm" data-ordenable="lotes">
         <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
           <tr>
             <th class="px-3 py-3 w-10"></th>
-            <th class="text-left px-4 py-3">Código</th>
-            <th class="text-left px-4 py-3">Producto</th>
-            <th class="text-right px-4 py-3">Recepción</th>
-            <th class="text-right px-4 py-3">Vence</th>
-            <th class="text-right px-4 py-3">Cajas</th>
-            <th class="text-right px-4 py-3">Recibido</th>
-            <th class="text-right px-4 py-3">Stock actual</th>
+            <th class="text-left px-4 py-3" data-orden="texto">Código</th>
+            <th class="text-left px-4 py-3" data-orden="texto">Producto</th>
+            <th class="text-right px-4 py-3" data-orden="texto">Recepción</th>
+            <th class="text-right px-4 py-3" data-orden="texto">Vence</th>
+            <th class="text-right px-4 py-3" data-orden="num">Cajas</th>
+            <th class="text-right px-4 py-3" data-orden="num">Recibido</th>
+            <th class="text-right px-4 py-3" data-orden="num">Stock actual</th>
             <th></th>
           </tr>
         </thead>
@@ -49,7 +49,7 @@
                       style="background-color: {{ $l->hex_resuelto ?? '#cbd5e1' }}"
                       title="{{ $l->hex_resuelto ?? '' }}"></span>
               </td>
-              <td class="px-4 py-3 font-mono whitespace-nowrap">
+              <td class="px-4 py-3 font-mono whitespace-nowrap" data-v="{{ $l->codigo_barcode }}">
                 {{ $l->codigo_barcode }}
                 @if ($l->propietario_externo)
                   <x-propietario-alerta :nombre="$l->propietario_nombre" class="w-4 h-4 ml-1" />
@@ -58,19 +58,19 @@
                   <span class="cursor-help text-slate-400 ml-1" title="{{ $l->notas }}">📝</span>
                 @endif
               </td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3" data-v="{{ $l->ral }} {{ $l->acabado }} {{ $l->textura_tipo }}">
                 <x-producto-resumen :p="$l" />
                 @if ($l->descripcion)
                   <div class="text-xs text-slate-500 mt-0.5">{{ $l->descripcion }}</div>
                 @endif
               </td>
-              <td class="px-4 py-3 text-right tabular-nums">@fecha($l->fecha_recepcion)</td>
-              <td class="px-4 py-3 text-right tabular-nums text-slate-500">
+              <td class="px-4 py-3 text-right tabular-nums" data-v="{{ substr($l->fecha_recepcion, 0, 10) }}">@fecha($l->fecha_recepcion)</td>
+              <td class="px-4 py-3 text-right tabular-nums text-slate-500" data-v="{{ substr((string) $l->fecha_vencimiento, 0, 10) }}">
                 @fecha($l->fecha_vencimiento)
               </td>
-              <td class="px-4 py-3 text-right tabular-nums">{{ $l->cantidad_cajas }}</td>
-              <td class="px-4 py-3 text-right tabular-nums">@kg($l->peso_total_recepcionado_kg) kg</td>
-              <td class="px-4 py-3 text-right">
+              <td class="px-4 py-3 text-right tabular-nums" data-v="{{ $l->cantidad_cajas }}">{{ $l->cantidad_cajas }}</td>
+              <td class="px-4 py-3 text-right tabular-nums" data-v="{{ (float) $l->peso_total_recepcionado_kg }}">@kg($l->peso_total_recepcionado_kg) kg</td>
+              <td class="px-4 py-3 text-right" data-v="{{ (float) $l->stock_kg }}">
                 <div class="font-semibold tabular-nums">@kg($l->stock_kg) kg</div>
                 <div class="w-32 ml-auto bg-slate-200 rounded-full h-1.5 mt-1">
                   <div class="{{ $color }} h-1.5 rounded-full" style="width: {{ $pct }}%"></div>

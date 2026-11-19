@@ -38,16 +38,16 @@
         <p class="text-sm mt-2">Empieza con un <a href="{{ route('productos.create') }}" class="text-amber-600 underline">nuevo producto</a>.</p>
       </div>
     @else
-      <table class="w-full text-sm">
+      <table class="w-full text-sm" data-ordenable="productos">
         <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
           <tr>
             <th class="px-3 py-3 w-12"></th>
-            <th class="text-left px-4 py-3">Producto</th>
-            <th class="text-left px-4 py-3">Textura</th>
-            <th class="text-center px-4 py-3">Origen</th>
-            <th class="text-right px-4 py-3">Stock</th>
-            <th class="text-center px-4 py-3">Lotes</th>
-            <th class="text-center px-4 py-3">Activo</th>
+            <th class="text-left px-4 py-3" data-orden="texto">Producto</th>
+            <th class="text-left px-4 py-3" data-orden="texto">Textura</th>
+            <th class="text-center px-4 py-3" data-orden="texto">Origen</th>
+            <th class="text-right px-4 py-3" data-orden="num">Stock</th>
+            <th class="text-center px-4 py-3" data-orden="num">Lotes</th>
+            <th class="text-center px-4 py-3" data-orden="num">Activo</th>
             <th></th>
           </tr>
         </thead>
@@ -66,7 +66,7 @@
                       style="background-color: {{ $p->hex_resuelto }}"
                       title="{{ $p->hex_resuelto }}"></span>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3" data-v="{{ $p->ral }} {{ $p->ral_nombre_oficial }} {{ $p->descripcion }}">
                 <div class="flex items-center gap-2">
                   @if ($sigla = \App\Models\Producto::sigla($p->tipo_pintura))
                     <span class="font-mono font-bold text-[0.65rem] tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
@@ -82,17 +82,17 @@
                 @endif
               </td>
               <td class="px-4 py-3">{{ \App\Models\Producto::texturaLabelDe($p) ?? ($p->textura_nombre ?? '—') }}</td>
-              <td class="px-4 py-3 text-center">
+              <td class="px-4 py-3 text-center" data-v="{{ \App\Support\Catalogo::nombre('origen', $p->origen) }}">
                 @if ($bandera = \App\Support\Catalogo::banderaHtml($p->origen ?? null))
                   {!! $bandera !!}
                 @else
                   <span class="text-slate-300">—</span>
                 @endif
               </td>
-              <td class="px-4 py-3 text-right tabular-nums {{ $clase }}"
+              <td class="px-4 py-3 text-right tabular-nums {{ $clase }}" data-v="{{ $stock }}"
                   title="Mínimo {{ number_format($p->stock_minimo_kg, 0) }} kg · crítico {{ number_format($p->stock_critico_kg, 0) }} kg">@kg($stock) kg</td>
-              <td class="px-4 py-3 text-center text-slate-500 tabular-nums">{{ $p->lotes_count }}</td>
-              <td class="px-4 py-3 text-center">
+              <td class="px-4 py-3 text-center text-slate-500 tabular-nums" data-v="{{ $p->lotes_count }}">{{ $p->lotes_count }}</td>
+              <td class="px-4 py-3 text-center" data-v="{{ $p->activo ? 1 : 0 }}">
                 @if ($p->activo)
                   <span class="text-emerald-600" title="Activo">●</span>
                 @else

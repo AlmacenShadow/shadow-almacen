@@ -68,5 +68,65 @@
     @yield('content')
   </main>
 
+<script>
+/*
+ * Tablas ordenables: <table data-ordenable="nombre"> y <th data-orden="texto|num">.
+ * Clic en el encabezado: ascendente; otro clic: descendente. El valor sale de
+ * data-v de la celda (si existe) o de su texto. Vacíos siempre al final.
+ * La última elección se recuerda por tabla (localStorage, si está disponible).
+ */
+document.querySelectorAll('table[data-ordenable]').forEach((tabla) => {
+  const tbody = tabla.tBodies[0];
+  const ths = [...tabla.tHead.rows[0].cells];
+  const clave = 'orden-' + tabla.dataset.ordenable;
+  const comparar = new Intl.Collator('es', { numeric: true, sensitivity: 'base' }).compare;
+
+  const valor = (fila, i) => {
+    const td = fila.cells[i];
+    return (td?.dataset.v ?? td?.innerText ?? '').trim();
+  };
+
+  const ordenar = (i, dir) => {
+    const tipo = ths[i].dataset.orden;
+    const filas = [...tbody.rows];
+    filas.sort((a, b) => {
+      const va = valor(a, i), vb = valor(b, i);
+      if (va === '' && vb === '') return 0;
+      if (va === '') return 1;          // vacíos al final en ambos sentidos
+      if (vb === '') return -1;
+      const r = tipo === 'num' ? parseFloat(va) - parseFloat(vb) : comparar(va, vb);
+      return dir === 'asc' ? r : -r;
+    });
+    filas.forEach(f => tbody.appendChild(f));
+    ths.forEach((th, j) => {
+      const flecha = th.querySelector('.flecha-orden');
+      if (!flecha) return;              // columnas sin orden (color, acciones)
+      flecha.textContent = j === i ? (dir === 'asc' ? '▲' : '▼') : '↕';
+      flecha.classList.toggle('opacity-30', j !== i);
+      th.setAttribute('aria-sort', j === i ? (dir === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+    try { localStorage.setItem(clave, JSON.stringify({ i, dir })); } catch (e) {}
+  };
+
+  ths.forEach((th, i) => {
+    if (!th.dataset.orden) return;
+    th.classList.add('cursor-pointer', 'select-none', 'hover:text-slate-800', 'whitespace-nowrap');
+    th.title = 'Ordenar';
+    const flecha = document.createElement('span');
+    flecha.className = 'flecha-orden ml-1 opacity-30';
+    flecha.textContent = '↕';
+    th.appendChild(flecha);
+    th.addEventListener('click', () => {
+      const actual = th.getAttribute('aria-sort');
+      ordenar(i, actual === 'ascending' ? 'desc' : 'asc');
+    });
+  });
+
+  try {
+    const guardado = JSON.parse(localStorage.getItem(clave) || 'null');
+    if (guardado && ths[guardado.i]?.dataset.orden) ordenar(guardado.i, guardado.dir);
+  } catch (e) {}
+});
+</script>
 </body>
 </html>
