@@ -22,7 +22,7 @@ class Vencimiento
         $vence = Carbon::parse($fecha)->startOfDay();
         $dias = (int) Carbon::today()->diffInDays($vence, false); // negativo = ya venció
 
-        if ($dias < 0)  return ['estado' => 'vencido',  'dias' => $dias, 'clase' => 'bg-purple-100 text-purple-800 ring-1 ring-purple-300', 'texto' => 'VENCIDO'];
+        if ($dias < 0)  return ['estado' => 'vencido',  'dias' => $dias, 'clase' => 'bg-purple-100 text-purple-800 ring-1 ring-purple-300', 'texto' => 'Vencido'];
         if ($dias < 30) return ['estado' => 'rojo',     'dias' => $dias, 'clase' => 'bg-red-100 text-red-800',       'texto' => self::faltan($dias)];
         if ($dias < 60) return ['estado' => 'naranja',  'dias' => $dias, 'clase' => 'bg-orange-100 text-orange-800', 'texto' => self::faltan($dias)];
         if ($dias < 90) return ['estado' => 'amarillo', 'dias' => $dias, 'clase' => 'bg-yellow-100 text-yellow-800', 'texto' => self::faltan($dias)];
