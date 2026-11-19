@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ConfiguracionController;
 use App\Http\Controllers\LoteController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
@@ -45,10 +46,21 @@ Route::middleware('auth')->group(function () {
     Route::patch('/productos/{producto}',    [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}',   [ProductoController::class, 'destroy'])->name('productos.destroy');
 
-    Route::get('/texturas',                  [TexturaController::class, 'index'])->name('texturas.index');
+    // La página vieja de texturas se reemplaza por Configuración
+    Route::get('/texturas', fn () => redirect()->route('configuracion.index', ['s' => 'textura_tipo']))->name('texturas.index');
     Route::post('/texturas',                 [TexturaController::class, 'store'])->name('texturas.store');
     Route::patch('/texturas/{textura}',      [TexturaController::class, 'update'])->name('texturas.update');
     Route::delete('/texturas/{textura}',     [TexturaController::class, 'destroy'])->name('texturas.destroy');
+
+    // Configuración (solo admin; el controlador lo verifica)
+    Route::get('/configuracion',                            [ConfiguracionController::class, 'index'])->name('configuracion.index');
+    Route::post('/configuracion/opciones/{grupo}',          [ConfiguracionController::class, 'opcionStore'])->name('configuracion.opciones.store');
+    Route::patch('/configuracion/opciones/{opcion}',        [ConfiguracionController::class, 'opcionUpdate'])->name('configuracion.opciones.update');
+    Route::delete('/configuracion/opciones/{opcion}',       [ConfiguracionController::class, 'opcionDestroy'])->name('configuracion.opciones.destroy');
+    Route::post('/configuracion/colores',                   [ConfiguracionController::class, 'colorStore'])->name('configuracion.colores.store');
+    Route::patch('/configuracion/colores/{codigo}',         [ConfiguracionController::class, 'colorUpdate'])->name('configuracion.colores.update');
+    Route::delete('/configuracion/colores/{codigo}',        [ConfiguracionController::class, 'colorDestroy'])->name('configuracion.colores.destroy');
+    Route::patch('/configuracion/parametros',               [ConfiguracionController::class, 'parametrosUpdate'])->name('configuracion.parametros.update');
 
     Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');
 

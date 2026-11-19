@@ -89,9 +89,14 @@
 
       <div>
         <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Proveedor — empresa (opcional)</label>
-        <input type="text" name="proveedor" value="{{ old('proveedor', $lote->proveedor) }}" maxlength="120"
+        <input type="text" name="proveedor" list="dl-proveedores" autocomplete="off" value="{{ old('proveedor', $lote->proveedor) }}" maxlength="120"
                class="w-full px-3 py-2 border border-slate-300 rounded-lg" placeholder="A quién se le compró. Ej: Pinturas del Istmo">
         <p class="text-xs text-slate-400 mt-1">El país de fabricación va en el producto (la bandera), no aquí.</p>
+        <datalist id="dl-proveedores">
+          @foreach (\App\Support\Catalogo::opciones('proveedor', true) as $prov)
+            <option value="{{ $prov }}"></option>
+          @endforeach
+        </datalist>
       </div>
 
       <div>

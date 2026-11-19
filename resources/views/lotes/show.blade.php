@@ -86,8 +86,8 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h3 class="font-semibold text-slate-800 mb-2">Etiquetas a imprimir</h3>
       <p class="text-xs text-slate-500 mb-4">
-        Por defecto <span class="font-bold">{{ $lote->cantidad_cajas * 3 }}</span> etiquetas
-        ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × 3)
+        Por defecto <span class="font-bold">{{ $lote->cantidad_cajas * \App\Support\Parametros::etiquetasPorCaja() }}</span> etiquetas
+        ({{ $lote->cantidad_cajas }} {{ $lote->cantidad_cajas === 1 ? 'caja' : 'cajas' }} × {{ \App\Support\Parametros::etiquetasPorCaja() }})
         en hoja carta de 3 × 10, etiquetas de 67 × 25 mm.
       </p>
 
@@ -136,7 +136,7 @@
             ¿Cuántas etiquetas?
           </label>
           <input type="number" name="cantidad" min="1" max="300"
-                 value="{{ $lote->cantidad_cajas * 3 }}"
+                 value="{{ $lote->cantidad_cajas * \App\Support\Parametros::etiquetasPorCaja() }}"
                  class="w-full px-3 py-2 border border-slate-300 rounded-lg tabular-nums">
         </div>
 

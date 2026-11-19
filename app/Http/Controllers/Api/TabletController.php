@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Lote;
 use App\Models\Movimiento;
 use App\Models\Producto;
+use App\Support\Catalogo;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -95,6 +96,8 @@ class TabletController extends Controller
             'usuarios'  => $usuarios,
             'productos' => $productos,
             'lotes'     => $lotes,
+            // clave de origen => data URI de la bandera (para países nuevos sin actualizar la app)
+            'banderas'  => Catalogo::banderas(),
         ]);
     }
 
@@ -107,8 +110,9 @@ class TabletController extends Controller
     {
         $p->metalizado    = (bool) $p->metalizado;
         $p->sigla         = Producto::sigla($p->tipo_pintura);
+        $p->tipo_nombre   = Catalogo::nombre('tipo_pintura', $p->tipo_pintura);
         $p->textura_label = Producto::texturaLabelDe($p) ?? $p->textura;
-        $p->origen_nombre = Producto::ORIGENES[$p->origen ?? ''] ?? null;
+        $p->origen_nombre = Catalogo::nombre('origen', $p->origen);
         return $p;
     }
 
@@ -177,11 +181,12 @@ class TabletController extends Controller
                 'hex'                => $lote->producto->hex,
                 'nombre_ral_oficial' => $lote->producto->nombre_ral_oficial,
                 'sigla'              => Producto::sigla($lote->producto->tipo_pintura),
-                'tipo_pintura'       => $lote->producto->tipo_pintura,
+                'tipo_pintura'       => Catalogo::nombre('tipo_pintura', $lote->producto->tipo_pintura),
                 'descripcion'        => $lote->producto->descripcion,
                 'textura_label'      => $lote->producto->textura_label,
                 'origen'             => $lote->producto->origen,
-                'origen_nombre'      => Producto::ORIGENES[$lote->producto->origen ?? ''] ?? null,
+                'origen_nombre'      => Catalogo::nombre('origen', $lote->producto->origen),
+                'bandera'            => Catalogo::banderaUri($lote->producto->origen),
                 'marca'              => $lote->producto->marca,
                 'referencia'         => $lote->producto->referencia,
                 'curado_temp_c'      => $lote->producto->curado_temp_c,

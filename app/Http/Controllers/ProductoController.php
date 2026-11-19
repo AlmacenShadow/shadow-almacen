@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Models\Textura;
+use App\Support\Catalogo;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -132,13 +133,13 @@ class ProductoController extends Controller
     {
         $data = $request->validate([
             'ral'               => ['required', 'string', 'max:16'],
-            'tipo_pintura'      => ['nullable', Rule::in(Producto::TIPOS_PINTURA)],
+            'tipo_pintura'      => ['nullable', Rule::in(array_keys(Catalogo::opciones('tipo_pintura')))],
             'descripcion'       => ['nullable', 'string', 'max:255'],
             'brillo_pct'        => ['required', 'integer', 'min:0', 'max:100'],
-            'acabado'           => ['required', Rule::in(array_keys(Producto::ACABADOS))],
+            'acabado'           => ['required', Rule::in(array_keys(Catalogo::opciones('acabado')))],
             'superficie'        => ['required', Rule::in(array_keys(Producto::SUPERFICIES))],
-            'textura_tipo'      => ['nullable', Rule::in(array_keys(Producto::TEXTURA_TIPOS)), 'required_if:superficie,texturizado'],
-            'origen'            => ['nullable', Rule::in(array_keys(Producto::ORIGENES))],
+            'textura_tipo'      => ['nullable', Rule::in(array_keys(Catalogo::opciones('textura_tipo'))), 'required_if:superficie,texturizado'],
+            'origen'            => ['nullable', Rule::in(array_keys(Catalogo::opciones('origen')))],
             'marca'             => ['nullable', 'string', 'max:80'],
             'referencia'        => ['nullable', 'string', 'max:80'],
             'curado_temp_c'     => ['nullable', 'integer', 'min:0', 'max:400'],
@@ -151,7 +152,7 @@ class ProductoController extends Controller
         ], [
             'hex_override.regex'     => 'El color debe estar en formato #RRGGBB (ej: #AB12FF).',
             'textura_tipo.required_if' => 'Si la superficie es texturizada, elige el tipo de textura.',
-            'acabado.required'       => 'Elige el acabado (mate, semibrillo o brillante).',
+            'acabado.required'       => 'Elige el acabado.',
             'superficie.required'    => 'Elige la superficie (lisa o texturizada).',
         ]);
 
@@ -186,13 +187,13 @@ class ProductoController extends Controller
     private function derivarTexturaId(array $data): int
     {
         if (($data['superficie'] ?? '') === 'texturizado' && !empty($data['textura_tipo'])) {
-            $nombre = Producto::TEXTURA_TIPOS[$data['textura_tipo']] ?? 'Texturizado';
+            $nombre = Catalogo::nombre('textura_tipo', $data['textura_tipo']) ?? 'Texturizado';
         } elseif (!empty($data['metalizado'])) {
             $nombre = 'Metálico';
         } elseif (($data['superficie'] ?? '') === 'texturizado') {
             $nombre = 'Texturizado';
         } else {
-            $nombre = Producto::ACABADOS[$data['acabado'] ?? 'mate'] ?? 'Mate';
+            $nombre = Catalogo::nombre('acabado', $data['acabado'] ?? 'mate') ?? 'Mate';
         }
         return Textura::firstOrCreate(['nombre' => $nombre], ['orden' => 100, 'activo' => true])->id;
     }

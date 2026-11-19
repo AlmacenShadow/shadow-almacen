@@ -39,6 +39,10 @@
                class="{{ request()->routeIs('usuarios.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
               Usuarios
             </a>
+            <a href="{{ route('configuracion.index') }}"
+               class="{{ request()->routeIs('configuracion.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
+              Configuración
+            </a>
           @endif
         </div>
       </div>

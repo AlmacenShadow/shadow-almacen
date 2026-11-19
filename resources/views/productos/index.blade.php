@@ -12,10 +12,12 @@
          class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 rounded border border-slate-300 bg-white">
         Catálogo K7
       </a>
-      <a href="{{ route('texturas.index') }}"
-         class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 rounded border border-slate-300 bg-white">
-        Texturas
-      </a>
+      @if (auth()->user()->esAdmin())
+        <a href="{{ route('configuracion.index') }}"
+           class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 rounded border border-slate-300 bg-white">
+          ⚙ Configuración
+        </a>
+      @endif
       <a href="{{ route('productos.create') }}"
          class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg shadow">
         + Nuevo producto
@@ -68,7 +70,7 @@
                 <div class="flex items-center gap-2">
                   @if ($sigla = \App\Models\Producto::sigla($p->tipo_pintura))
                     <span class="font-mono font-bold text-[0.65rem] tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
-                          title="{{ $p->tipo_pintura }}">{{ $sigla }}</span>
+                          title="{{ \App\Support\Catalogo::nombre('tipo_pintura', $p->tipo_pintura) }}">{{ $sigla }}</span>
                   @endif
                   <span class="font-mono font-semibold">{{ $p->ral }}</span>
                   @if ($p->ral_nombre_oficial)
@@ -81,9 +83,8 @@
               </td>
               <td class="px-4 py-3">{{ \App\Models\Producto::texturaLabelDe($p) ?? ($p->textura_nombre ?? '—') }}</td>
               <td class="px-4 py-3 text-center">
-                @if ($bandera = \App\Models\Producto::BANDERAS[$p->origen ?? ''] ?? null)
-                  <span title="{{ \App\Models\Producto::ORIGENES[$p->origen] }}"
-                        class="inline-flex [&>svg]:inline-block [&>svg]:w-[22px] [&>svg]:h-[15px] [&>svg]:rounded-sm [&>svg]:shadow-[0_0_0_1px_rgba(0,0,0,.12)]">{!! $bandera !!}</span>
+                @if ($bandera = \App\Support\Catalogo::banderaHtml($p->origen ?? null))
+                  {!! $bandera !!}
                 @else
                   <span class="text-slate-300">—</span>
                 @endif

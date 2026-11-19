@@ -32,15 +32,21 @@
   $curadoTempAct   = $v('curado_temp_c', '');
   $curadoTiempoAct = $v('curado_tiempo_min', '');
   $hexOverrideAct  = $v('hex_override', '');
-  $stockMinAct     = $v('stock_minimo_kg', 50);
-  $stockCritAct    = $v('stock_critico_kg', 20);
+  $stockMinAct     = $v('stock_minimo_kg', \App\Support\Parametros::get('producto.stock_minimo_default_kg', 50));
+  $stockCritAct    = $v('stock_critico_kg', \App\Support\Parametros::get('producto.stock_critico_default_kg', 20));
   $activoAct       = old('activo', $isEdit ? $producto->activo : true);
 
   $ralMap = $ralCatalogo->mapWithKeys(fn ($r) => [
     $r->codigo => ['nombre' => $r->nombre_oficial, 'hex' => $r->hex]
   ])->toArray();
 
-  $banderas = \App\Models\Producto::BANDERAS;
+  // Catálogos editables (Configuración): solo activos, más el valor actual del producto aunque esté desactivado
+  $C = \App\Support\Catalogo::class;
+  $optTipos     = $C::opciones('tipo_pintura', true, $tipoActual);
+  $optAcabados  = $C::opciones('acabado', true, $acabadoActual);
+  $optTexturas  = $C::opciones('textura_tipo', true, $texturaTipoAct);
+  $optOrigenes  = $C::opciones('origen', true, $origenActual);
+  $banderas     = collect($C::banderas())->map(fn ($u, $k) => $C::banderaHtml($k))->all();
 @endphp
 
 <style>
@@ -116,8 +122,8 @@
           <label class="pf-lbl" for="tipo_pintura">Tipo de pintura</label>
           <select id="tipo_pintura" name="tipo_pintura" class="pf-in">
             <option value="">— elegir —</option>
-            @foreach (\App\Models\Producto::TIPOS_PINTURA as $t)
-              <option value="{{ $t }}" @selected($tipoActual === $t)>{{ $t }}</option>
+            @foreach ($optTipos as $k => $t)
+              <option value="{{ $k }}" @selected($tipoActual === $k)>{{ $t }}</option>
             @endforeach
           </select>
         </div>
@@ -145,7 +151,7 @@
       <div class="pf-field">
         <span class="pf-lbl">Acabado</span>
         <div class="pills">
-          @foreach (\App\Models\Producto::ACABADOS as $k => $txt)
+          @foreach ($optAcabados as $k => $txt)
             <label class="pill"><input type="radio" name="acabado" value="{{ $k }}" required @checked($acabadoActual === $k)><span class="dot"></span>{{ $txt }}</label>
           @endforeach
         </div>
@@ -161,7 +167,7 @@
         <div class="cascade" id="c-textura" @if ($superfActual !== 'texturizado') hidden @endif>
           <span class="pf-lbl">Tipo de textura</span>
           <div class="pills">
-            @foreach (\App\Models\Producto::TEXTURA_TIPOS as $k => $txt)
+            @foreach ($optTexturas as $k => $txt)
               <label class="pill"><input type="radio" name="textura_tipo" value="{{ $k }}" @checked($texturaTipoAct === $k)>{{ $txt }}</label>
             @endforeach
           </div>
@@ -192,7 +198,7 @@
       <div class="pf-field">
         <span class="pf-lbl">Origen <span class="opt">opcional · toca de nuevo para quitar</span></span>
         <div class="pills" id="g-origen">
-          @foreach (\App\Models\Producto::ORIGENES as $k => $txt)
+          @foreach ($optOrigenes as $k => $txt)
             <label class="pill"><input type="radio" name="origen" value="{{ $k }}" @checked($origenActual === $k)>{!! $banderas[$k] ?? '' !!} {{ $txt }}</label>
           @endforeach
         </div>
@@ -267,7 +273,7 @@
     <span class="pf-lbl">Vista previa</span>
     <div class="aspect-square rounded-xl border border-slate-300 mb-4" id="pv-swatch"
          style="box-shadow:inset 0 2px 8px rgba(15,23,42,.12);background-color: {{ $hexOverrideAct ?: ($ralMap[$ralActual]['hex'] ?? '#cbd5e1') }}"></div>
-    <span class="pv-tipo" id="pv-tipo">{{ $tipoActual ?: '—' }}</span>
+    <span class="pv-tipo" id="pv-tipo">—</span>
     <div class="font-mono font-bold text-lg text-slate-900" id="pv-ral">{{ $ralActual ?: 'RAL—' }}</div>
     <div class="text-xs text-slate-400" id="pv-nombre">{{ $ralMap[$ralActual]['nombre'] ?? '' }}</div>
     <div class="text-sm text-slate-500 mt-0.5" id="pv-desc">{{ $descActual ?: '—' }}</div>
@@ -284,12 +290,13 @@
 <script>
 (function () {
   const RAL         = @json($ralMap);
-  const ACABADOS    = @json(\App\Models\Producto::ACABADOS);
+  const ACABADOS    = @json($optAcabados);
   const SUPERFICIES = @json(\App\Models\Producto::SUPERFICIES);
-  const TEXTURAS    = @json(\App\Models\Producto::TEXTURA_TIPOS);
-  const ORIGENES    = @json(\App\Models\Producto::ORIGENES);
+  const TEXTURAS    = @json($optTexturas);
+  const ORIGENES    = @json($optOrigenes);
+  const TIPOS       = @json($optTipos);
   const BANDERAS    = @json($banderas);
-  const SIGLAS      = @json(\App\Models\Producto::TIPO_SIGLAS);
+  const SIGLAS      = @json(\App\Support\Catalogo::siglas());
   const FALLBACK    = '#cbd5e1';
 
   const form  = document.getElementById('form-producto');
@@ -332,7 +339,7 @@
       : (code ? '⚠ no está en el catálogo K7 — usa color personalizado' : '— elige uno del catálogo o escribe libre —');
 
     const tipo = $('tipo_pintura').value;
-    $('pv-tipo').textContent = tipo ? `${SIGLAS[tipo]} · ${tipo}` : '—';
+    $('pv-tipo').textContent = tipo ? `${SIGLAS[tipo] || ''} · ${TIPOS[tipo] || tipo}` : '—';
     $('pv-desc').textContent = $('descripcion').value || '—';
 
     const tx = texturaLabel();

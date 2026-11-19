@@ -241,7 +241,7 @@ class LoteController extends Controller
      *
      * Parámetros de query:
      *   - cantidad   (int, opcional): total de etiquetas a imprimir.
-     *                Default: cantidad_cajas * 3.
+     *                Default: cantidad_cajas * parámetro etiquetas.por_caja (3).
      *   - desde_fila (int 1-10, opcional): solo aplica a la primera hoja.
      *                Si la hoja física tiene las primeras N-1 filas ya usadas,
      *                empezamos a pintar en la fila N. Default: 1.
@@ -250,7 +250,7 @@ class LoteController extends Controller
     {
         $this->autorizar();
 
-        $defaultCantidad = $lote->cantidad_cajas * 3;
+        $defaultCantidad = $lote->cantidad_cajas * \App\Support\Parametros::etiquetasPorCaja();
         $params = $request->validate([
             'cantidad'   => ['nullable', 'integer', 'min:1', 'max:300'],
             'desde_fila' => ['nullable', 'integer', 'min:1', 'max:10'],

@@ -7,18 +7,16 @@
 @props(['p', 'small' => false])
 @php
   $sigla   = \App\Models\Producto::sigla($p->tipo_pintura ?? null);
+  $tipo    = \App\Support\Catalogo::nombre('tipo_pintura', $p->tipo_pintura ?? null);
   $acabado = \App\Models\Producto::acabadoCorto($p);
-  $bandera = \App\Models\Producto::BANDERAS[$p->origen ?? ''] ?? null;
-  $origen  = \App\Models\Producto::ORIGENES[$p->origen ?? ''] ?? null;
+  $bandera = \App\Support\Catalogo::banderaHtml($p->origen ?? null);
 @endphp
 <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-1.5 flex-wrap ' . ($small ? 'text-xs text-slate-500' : 'font-medium')]) }}>
   @if ($sigla)
     <span class="font-mono font-bold text-[0.65rem] tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded"
-          title="{{ $p->tipo_pintura }}">{{ $sigla }}</span>
+          title="{{ $tipo }}">{{ $sigla }}</span>
   @endif
   <span class="font-mono">{{ $p->ral }}</span>
   @if ($acabado)<span>· {{ implode(' · ', $acabado) }}</span>@endif
-  @if ($bandera)
-    <span title="{{ $origen }}" class="inline-flex [&>svg]:inline-block [&>svg]:w-[22px] [&>svg]:h-[15px] [&>svg]:rounded-sm [&>svg]:shadow-[0_0_0_1px_rgba(0,0,0,.12)]">{!! $bandera !!}</span>
-  @endif
+  {!! $bandera !!}
 </span>

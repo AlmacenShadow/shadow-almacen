@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Catalogo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,36 +49,17 @@ class Producto extends Model
     /** Color por defecto cuando ni hex_override ni catálogo tienen valor. */
     public const HEX_FALLBACK = '#cbd5e1'; // slate-300
 
-    /** Catálogos de opciones (clave guardada => etiqueta mostrada). */
-    public const TIPOS_PINTURA = ['Epoxi', 'Poliéster', 'Híbrida (epoxi-poliéster)', 'Poliuretano', 'Poliéster superdurable'];
-    public const ACABADOS      = ['mate' => 'Mate', 'semibrillo' => 'Semibrillo', 'brillante' => 'Brillante'];
-    public const SUPERFICIES   = ['liso' => 'Liso', 'texturizado' => 'Texturizado'];
-    public const TEXTURA_TIPOS = ['martillado' => 'Martillado', 'granulado' => 'Granulado', 'cuero' => 'Cuero', 'arrugado' => 'Arrugado', 'piel_naranja' => 'Piel de naranja'];
-    public const ORIGENES      = ['china' => 'China', 'colombia' => 'Colombia', 'usa' => 'USA', 'panama' => 'Panamá'];
-
     /**
-     * Sigla corta por tipo de pintura (para resúmenes y listados).
-     * EP/PE/PU son las abreviaturas usuales del sector; aquí van a 3 letras.
+     * Superficie es estructural (con "texturizado" se abre el tipo de textura),
+     * por eso queda fija. El resto de catálogos son editables desde Configuración
+     * (tabla catalogo_opciones, ver App\Support\Catalogo).
      */
-    public const TIPO_SIGLAS = [
-        'Epoxi'                     => 'EPO',
-        'Poliéster'                 => 'POL',
-        'Híbrida (epoxi-poliéster)' => 'EPP',
-        'Poliuretano'               => 'PUR',
-        'Poliéster superdurable'    => 'PSD',
-    ];
+    public const SUPERFICIES = ['liso' => 'Liso', 'texturizado' => 'Texturizado'];
 
-    /** Banderas SVG inline por origen (22x15 vía la clase .flag). */
-    public const BANDERAS = [
-        'china'    => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#de2910"/><polygon points="7,4 7.9,6.5 10.5,6.5 8.4,8.1 9.2,10.6 7,9 4.8,10.6 5.6,8.1 3.5,6.5 6.1,6.5" fill="#ffde00"/></svg>',
-        'colombia' => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fcd116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#ce1126"/></svg>',
-        'usa'      => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#ffffff"/><g fill="#b22234"><rect width="30" height="2"/><rect y="4" width="30" height="2"/><rect y="8" width="30" height="2"/><rect y="12" width="30" height="2"/><rect y="16" width="30" height="2"/></g><rect width="12" height="11" fill="#3c3b6e"/></svg>',
-        'panama'   => '<svg class="flag" viewBox="0 0 30 20"><rect width="30" height="20" fill="#ffffff"/><rect x="15" width="15" height="10" fill="#d21034"/><rect y="10" width="15" height="10" fill="#005293"/><polygon points="7.5,2.5 8.3,4.8 10.8,4.8 8.8,6.3 9.5,8.7 7.5,7.2 5.5,8.7 6.2,6.3 4.2,4.8 6.7,4.8" fill="#005293"/><polygon points="22.5,12.5 23.3,14.8 25.8,14.8 23.8,16.3 24.5,18.7 22.5,17.2 20.5,18.7 21.2,16.3 19.2,14.8 21.7,14.8" fill="#d21034"/></svg>',
-    ];
-
+    /** Sigla del tipo de pintura (clave guardada en productos.tipo_pintura). */
     public static function sigla(?string $tipo): ?string
     {
-        return $tipo ? (self::TIPO_SIGLAS[$tipo] ?? mb_strtoupper(mb_substr($tipo, 0, 3))) : null;
+        return Catalogo::sigla($tipo);
     }
 
     /**
@@ -88,10 +70,10 @@ class Producto extends Model
     public static function acabadoCorto(object $p): array
     {
         $partes = [];
-        if (!empty($p->acabado)) $partes[] = self::ACABADOS[$p->acabado] ?? $p->acabado;
+        if (!empty($p->acabado)) $partes[] = Catalogo::nombre('acabado', $p->acabado);
         if (($p->superficie ?? null) === 'texturizado') {
             $partes[] = !empty($p->textura_tipo)
-                ? (self::TEXTURA_TIPOS[$p->textura_tipo] ?? $p->textura_tipo)
+                ? Catalogo::nombre('textura_tipo', $p->textura_tipo)
                 : 'Texturizado';
         }
         if (!empty($p->metalizado)) $partes[] = 'Metalizado';
@@ -156,10 +138,10 @@ class Producto extends Model
     public static function texturaLabelDe(object $p): ?string
     {
         $partes = [];
-        if (!empty($p->acabado)) $partes[] = self::ACABADOS[$p->acabado] ?? $p->acabado;
+        if (!empty($p->acabado)) $partes[] = Catalogo::nombre('acabado', $p->acabado);
         // Si es texturizado con tipo, basta el tipo ("Martillado"), sin la palabra "Texturizado".
         if (($p->superficie ?? null) === 'texturizado' && !empty($p->textura_tipo)) {
-            $partes[] = self::TEXTURA_TIPOS[$p->textura_tipo] ?? $p->textura_tipo;
+            $partes[] = Catalogo::nombre('textura_tipo', $p->textura_tipo);
         } elseif (!empty($p->superficie)) {
             $partes[] = self::SUPERFICIES[$p->superficie] ?? $p->superficie;
         }
@@ -181,7 +163,7 @@ class Producto extends Model
             $this->ral,
             $this->nombre_ral_oficial,
             $this->textura_label,
-            isset(self::ORIGENES[$this->origen]) ? self::ORIGENES[$this->origen] : null,
+            Catalogo::nombre('origen', $this->origen),
         ]);
 
         return implode(' · ', $partes);
