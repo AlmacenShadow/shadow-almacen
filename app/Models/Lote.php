@@ -30,6 +30,7 @@ class Lote extends Model
         'propietario_externo',
         'propietario_nombre',
         'notas',
+        'ubicacion',
     ];
 
     protected $casts = [

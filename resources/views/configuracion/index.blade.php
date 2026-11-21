@@ -40,7 +40,7 @@
       @if ($g)
         <h3 class="text-lg font-semibold text-slate-900">{{ $g['titulo'] }}</h3>
         <p class="text-sm text-slate-500 mb-4">{{ $g['ayuda'] }}
-          @if ($seccion !== 'proveedor') Si una opción ya la usan productos, no se puede borrar: desactívala y dejará de aparecer en los formularios. @endif
+          @if (!in_array($seccion, ['proveedor', 'ubicacion'], true)) Si una opción ya la usan productos, no se puede borrar: desactívala y dejará de aparecer en los formularios. @endif
         </p>
 
         <table class="w-full text-sm">
@@ -51,7 +51,7 @@
               @if ($seccion === 'origen')<th class="text-left py-2 pr-2">Bandera</th><th class="text-left py-2 pr-2">ISO</th><th class="text-left py-2 pr-2">Subir imagen</th>@endif
               <th class="text-left py-2 pr-2">Orden</th>
               <th class="text-center py-2 pr-2">Activo</th>
-              <th class="text-center py-2 pr-2">{{ $seccion === 'proveedor' ? 'Lotes' : 'Productos' }}</th>
+              <th class="text-center py-2 pr-2">{{ in_array($seccion, ['proveedor', 'ubicacion'], true) ? 'Lotes' : 'Productos' }}</th>
               <th></th>
             </tr>
           </thead>

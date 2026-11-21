@@ -47,6 +47,15 @@
           </dd>
         @endif
 
+        <dt class="text-slate-500">Ubicación</dt>
+        <dd>
+          @if ($lote->ubicacion)
+            <span class="inline-block font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800">{{ \App\Support\Catalogo::nombre('ubicacion', $lote->ubicacion) }}</span>
+          @else
+            <span class="text-amber-700">sin ubicación</span> · <a href="{{ route('lotes.edit', $lote) }}" class="text-amber-600 hover:underline text-sm">asignar</a>
+          @endif
+        </dd>
+
         <dt class="text-slate-500">Fecha de recepción</dt>
         <dd>@fecha($lote->fecha_recepcion)</dd>
 
@@ -74,6 +83,22 @@
         <dt class="text-slate-500">Recepcionado por</dt>
         <dd>{{ $lote->recepcionadoPor->nombre }}</dd>
       </dl>
+      @if ($ubicaciones->isNotEmpty())
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Historial de ubicación</div>
+          <ul class="text-sm text-slate-600 space-y-0.5">
+            @foreach ($ubicaciones as $h)
+              <li>
+                @fechaHora($h->created_at) ·
+                {{ $h->desde ? \App\Support\Catalogo::nombre('ubicacion', $h->desde) : '—' }} →
+                <b>{{ $h->hasta ? \App\Support\Catalogo::nombre('ubicacion', $h->hasta) : '—' }}</b>
+                · {{ $h->usuario_nombre ?? 'sistema' }}@if ($h->nota) · <span class="text-slate-400">{{ $h->nota }}</span>@endif
+              </li>
+            @endforeach
+          </ul>
+        </div>
+      @endif
+
       @if ($lote->notas)
         <div class="mt-5 pt-4 border-t border-slate-100">
           <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Notas</div>

@@ -32,6 +32,8 @@ class CatalogoOpcion extends Model
                            'ayuda' => 'País de fabricación de la pintura. Con el código ISO (2 letras) se descarga la bandera.'],
         'proveedor'    => ['titulo' => 'Proveedores', 'singular' => 'proveedor', 'campo' => null,
                            'ayuda' => 'Empresas a las que se compra. Se sugieren al escribir el proveedor de un lote.'],
+        'ubicacion'    => ['titulo' => 'Ubicaciones', 'singular' => 'ubicación', 'campo' => null,
+                           'ayuda' => 'Estante + cara donde se guardan los lotes (A = derecha, B = izquierda). El orden es el del recorrido.'],
     ];
 
     protected static function booted(): void
@@ -46,6 +48,9 @@ class CatalogoOpcion extends Model
     {
         if ($this->grupo === 'proveedor') {
             return \Illuminate\Support\Facades\DB::table('lotes')->where('proveedor', $this->nombre)->count();
+        }
+        if ($this->grupo === 'ubicacion') {
+            return \Illuminate\Support\Facades\DB::table('lotes')->where('ubicacion', $this->clave)->count();
         }
         $campo = self::GRUPOS[$this->grupo]['campo'] ?? null;
         return $campo ? Producto::where($campo, $this->clave)->count() : 0;

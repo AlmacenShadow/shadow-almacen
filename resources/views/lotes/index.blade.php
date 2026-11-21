@@ -6,6 +6,10 @@
     <div>
       <h2 class="text-2xl font-bold text-slate-900">Lotes en almacén</h2>
       <p class="text-sm text-slate-500">Stock actual derivado de movimientos</p>
+      @php $sinUbic = $lotes->filter(fn ($l) => !$l->ubicacion)->count(); @endphp
+      @if ($sinUbic > 0)
+        <p class="text-sm text-amber-700 mt-1">📍 {{ $sinUbic }} {{ $sinUbic === 1 ? 'lote sin ubicación' : 'lotes sin ubicación' }}: asígnala en Editar lote.</p>
+      @endif
     </div>
     <a href="{{ route('lotes.create') }}"
        class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg shadow">
@@ -26,6 +30,7 @@
             <th class="px-3 py-3 w-10"></th>
             <th class="text-left px-4 py-3" data-orden="texto">Código</th>
             <th class="text-left px-4 py-3" data-orden="texto">Producto</th>
+            <th class="text-center px-4 py-3" data-orden="num">Ubicación</th>
             <th class="text-right px-4 py-3" data-orden="texto">Recepción</th>
             <th class="text-right px-4 py-3" data-orden="texto">Vence</th>
             <th class="text-right px-4 py-3" data-orden="num">Cajas</th>
@@ -62,6 +67,14 @@
                 <x-producto-resumen :p="$l" />
                 @if ($l->descripcion)
                   <div class="text-xs text-slate-500 mt-0.5">{{ $l->descripcion }}</div>
+                @endif
+              </td>
+              @php $ubic = \App\Support\Catalogo::todas('ubicacion')->get($l->ubicacion ?? ''); @endphp
+              <td class="px-4 py-3 text-center" data-v="{{ $ubic?->orden ?? '' }}">
+                @if ($l->ubicacion)
+                  <span class="inline-block font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">{{ $ubic?->nombre ?? strtoupper($l->ubicacion) }}</span>
+                @else
+                  <span class="text-slate-300">—</span>
                 @endif
               </td>
               <td class="px-4 py-3 text-right tabular-nums" data-v="{{ substr($l->fecha_recepcion, 0, 10) }}">@fecha($l->fecha_recepcion)</td>

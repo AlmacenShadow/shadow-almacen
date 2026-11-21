@@ -39,6 +39,7 @@ class LoteController extends Controller
                 'lotes.propietario_externo',
                 'lotes.propietario_nombre',
                 'lotes.notas',
+                'lotes.ubicacion',
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
                 'productos.brillo_pct',
@@ -81,6 +82,15 @@ class LoteController extends Controller
         'propietario_nombre.required_if_accepted' => 'Si el lote es de un propietario externo, escribe su nombre.',
     ];
 
+    /** Deja constancia de un cambio de ubicación (de dónde, a dónde, quién). */
+    public static function registrarUbicacion(int $loteId, ?string $desde, ?string $hasta, ?string $nota = null): void
+    {
+        DB::table('lote_ubicaciones')->insert([
+            'lote_id' => $loteId, 'desde' => $desde, 'hasta' => $hasta,
+            'usuario_id' => Auth::id(), 'nota' => $nota, 'created_at' => now(),
+        ]);
+    }
+
     private static function normalizarExtra(Request $request, array $data): array
     {
         $data['propietario_externo'] = $request->boolean('propietario_externo');
@@ -100,8 +110,9 @@ class LoteController extends Controller
             'cantidad_cajas'             => ['required', 'integer', 'min:1'],
             'proveedor'                  => ['nullable', 'string', 'max:120'],
             'factura'                    => ['nullable', 'string', 'max:60'],
+            'ubicacion'                  => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Catalogo::opciones('ubicacion')))],
             ...self::REGLAS_EXTRA,
-        ], self::MENSAJES_EXTRA);
+        ], self::MENSAJES_EXTRA + ['ubicacion.required' => 'Elige en qué estante y cara queda el lote.']);
         $data = self::normalizarExtra($request, $data);
 
         $lote = DB::transaction(function () use ($data) {
@@ -114,6 +125,7 @@ class LoteController extends Controller
             ]);
             $lote->codigo_barcode = sprintf('LOT-%05d', $lote->id);
             $lote->save();
+            self::registrarUbicacion($lote->id, null, $lote->ubicacion, 'Recepción');
             return $lote;
         });
 
@@ -157,7 +169,13 @@ class LoteController extends Controller
             )
             ->get();
 
+        $ubicaciones = DB::table('lote_ubicaciones as h')
+            ->leftJoin('usuarios as u', 'u.id', '=', 'h.usuario_id')
+            ->where('h.lote_id', $lote->id)->orderByDesc('h.id')
+            ->select('h.*', 'u.nombre as usuario_nombre')->get();
+
         return view('lotes.show', [
+            'ubicaciones' => $ubicaciones,
             'lote'        => $lote,
             'movimientos' => $movimientos,
             'qrDataUri'   => $this->qrDataUri($lote),
@@ -217,6 +235,7 @@ class LoteController extends Controller
             'proveedor'         => ['nullable', 'string', 'max:120'],
             'factura'           => ['nullable', 'string', 'max:60'],
             'fecha_vencimiento' => ['nullable', 'date'],
+            'ubicacion'         => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Catalogo::opciones('ubicacion')))],
             ...self::REGLAS_EXTRA,
         ];
 
@@ -231,7 +250,11 @@ class LoteController extends Controller
         }
 
         $data = self::normalizarExtra($request, $request->validate($rules, self::MENSAJES_EXTRA));
+        $ubicAntes = $lote->ubicacion;
         $lote->update($data);
+        if (array_key_exists('ubicacion', $data) && $data['ubicacion'] !== $ubicAntes) {
+            self::registrarUbicacion($lote->id, $ubicAntes, $data['ubicacion'], 'Editar lote');
+        }
 
         return redirect()
             ->route('lotes.show', $lote)

@@ -20,7 +20,7 @@ use Illuminate\View\View;
  */
 class ConfiguracionController extends Controller
 {
-    private const SECCIONES = ['tipo_pintura', 'acabado', 'textura_tipo', 'origen', 'proveedor', 'colores', 'parametros'];
+    private const SECCIONES = ['tipo_pintura', 'acabado', 'textura_tipo', 'origen', 'proveedor', 'ubicacion', 'colores', 'parametros'];
 
     private function autorizar(): void
     {
@@ -86,7 +86,7 @@ class ConfiguracionController extends Controller
         $this->autorizar();
 
         if (($usos = $opcion->usos()) > 0) {
-            $que = $opcion->grupo === 'proveedor' ? 'lote(s)' : 'producto(s)';
+            $que = in_array($opcion->grupo, ['proveedor', 'ubicacion'], true) ? 'lote(s)' : 'producto(s)';
             return $this->volver($opcion->grupo, null,
                 "No puedo borrar «{$opcion->nombre}»: lo usan {$usos} {$que}. Desactívalo para que no aparezca en los formularios.");
         }

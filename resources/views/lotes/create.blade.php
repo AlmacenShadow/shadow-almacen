@@ -73,6 +73,8 @@
                class="w-full px-3 py-2 border border-slate-300 rounded-lg">
       </div>
 
+      @include('lotes._ubicacion', ['actual' => null, 'obligatorio' => true])
+
       @include('lotes._extra')
     </div>
 
