@@ -23,14 +23,10 @@
     <button type="button" id="btn-vivo" class="mt-3 w-full border border-slate-300 rounded-xl py-3 font-semibold text-slate-700">📷 Escanear en vivo</button>
     <div id="lector" class="mt-3 rounded-xl overflow-hidden"></div>
 
-    <form method="POST" action="{{ route('consulta.identificar', $token) }}" id="f-codigo" class="mt-5">
+    {{-- Solo por escaneo (foto o en vivo): no se puede escribir el código a mano --}}
+    <form method="POST" action="{{ route('consulta.identificar', $token) }}" id="f-codigo" hidden>
       @csrf
-      <label class="block text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1" for="codigo">o escribe el código de tu gafete</label>
-      <div class="flex gap-2">
-        <input id="codigo" name="codigo" autocomplete="off" autocapitalize="characters" placeholder="PNT-0001"
-               class="flex-1 min-w-0 px-3 py-2.5 border border-slate-300 rounded-lg font-mono uppercase text-lg">
-        <button class="bg-slate-900 text-white px-4 rounded-lg font-semibold">Entrar</button>
-      </div>
+      <input type="hidden" id="codigo" name="codigo">
     </form>
   </div>
 
@@ -48,7 +44,7 @@
         const texto = await LectorCodigos.desdeFoto(f, FORMATOS).catch(() => null);
         e.target.value = '';
         if (texto) { aviso('Gafete leído: ' + texto); enviar(texto); }
-        else aviso('No pude leer el código en la foto. Prueba más cerca, con buena luz y sin reflejos, o escribe el código.');
+        else aviso('No pude leer el código en la foto. Prueba más cerca, con buena luz y sin reflejos.');
       });
 
       document.getElementById('btn-vivo').addEventListener('click', async () => {
