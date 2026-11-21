@@ -22,6 +22,10 @@
              class="{{ request()->routeIs('lotes.create') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
             Nueva recepción
           </a>
+          <a href="{{ route('buscar') }}"
+             class="{{ request()->routeIs('buscar*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
+            🔎 Buscar
+          </a>
           <a href="{{ route('movimientos.index') }}"
              class="{{ request()->routeIs('movimientos.*') ? 'text-white font-semibold border-b-2 border-amber-400 pb-1' : 'text-slate-400 hover:text-white' }}">
             Movimientos

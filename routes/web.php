@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\LoteController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
@@ -15,6 +16,15 @@ use Illuminate\Support\Facades\Route;
 // Login (público)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+
+// Buscador para celulares: enlace privado (token) + gafete. Solo consulta.
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/c/{token}',                    [ConsultaController::class, 'movil'])->name('consulta.movil');
+    Route::post('/c/{token}/identificar',       [ConsultaController::class, 'movilIdentificar'])->middleware('throttle:10,1')->name('consulta.identificar');
+    Route::post('/c/{token}/salir',             [ConsultaController::class, 'movilSalir'])->name('consulta.salir');
+    Route::get('/c/{token}/datos',              [ConsultaController::class, 'movilDatos'])->name('consulta.datos');
+    Route::get('/c/{token}/lote/{codigo}/movimientos', [ConsultaController::class, 'movilMovimientos'])->name('consulta.movimientos');
+});
 
 // Raíz: si está autenticado va al panel; si no, a login
 Route::get('/', function () {
@@ -61,9 +71,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/configuracion/colores/{codigo}',         [ConfiguracionController::class, 'colorUpdate'])->name('configuracion.colores.update');
     Route::delete('/configuracion/colores/{codigo}',        [ConfiguracionController::class, 'colorDestroy'])->name('configuracion.colores.destroy');
     Route::get('/configuracion/ubicaciones/carteles.pdf',   [ConfiguracionController::class, 'cartelesUbicacion'])->name('configuracion.ubicaciones.carteles');
+    Route::post('/configuracion/acceso/regenerar',          [ConfiguracionController::class, 'accesoRegenerar'])->name('configuracion.acceso.regenerar');
+    Route::get('/configuracion/acceso/cartel.pdf',          [ConfiguracionController::class, 'accesoCartel'])->name('configuracion.acceso.cartel');
     Route::patch('/configuracion/parametros',               [ConfiguracionController::class, 'parametrosUpdate'])->name('configuracion.parametros.update');
 
     Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');
+
+    Route::get('/buscar',                    [ConsultaController::class, 'panel'])->name('buscar');
+    Route::get('/buscar/datos',              [ConsultaController::class, 'panelDatos'])->name('buscar.datos');
+    Route::get('/buscar/lote/{codigo}/movimientos', [ConsultaController::class, 'panelMovimientos'])->name('buscar.movimientos');
+    Route::get('/buscar/lote/{codigo}',      [ConsultaController::class, 'panelFicha'])->name('buscar.ficha');
 
     Route::get('/reportes',                  [ReporteController::class, 'index'])->name('reportes.index');
     Route::get('/reportes/export',           [ReporteController::class, 'exportCsv'])->name('reportes.export');

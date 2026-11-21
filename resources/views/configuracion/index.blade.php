@@ -3,7 +3,7 @@
 
 @php
   $menu = collect($grupos)->map(fn ($g) => $g['titulo'])->all()
-        + ['colores' => 'Colores personalizados', 'parametros' => 'Parámetros'];
+        + ['colores' => 'Colores personalizados', 'parametros' => 'Parámetros', 'acceso' => 'Acceso móvil'];
   $inp = 'px-2.5 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400';
   $g = $grupos[$seccion] ?? null;
 @endphp
@@ -141,6 +141,32 @@
         </form>
 
       {{-- ================= Colores personalizados ================= --}}
+      @elseif ($seccion === 'acceso')
+        <h3 class="text-lg font-semibold text-slate-900">Acceso móvil al buscador</h3>
+        <p class="text-sm text-slate-500 mb-4">
+          Los trabajadores abren este enlace privado desde su celular (escaneando el QR impreso), escanean su gafete una vez
+          y pueden buscar lotes, verlos en el mapa y escanear la etiqueta de una caja. Es solo de consulta.
+          Cualquiera con el enlace llega a la pantalla del gafete: si el QR sale del almacén, cámbialo.
+        </p>
+        <div class="flex flex-wrap items-start gap-6">
+          <img src="{{ $accesoQr }}" alt="QR del buscador" class="w-48 h-48 border border-slate-200 rounded-lg p-2 bg-white">
+          <div class="flex-1 min-w-[260px] space-y-3">
+            <div>
+              <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Enlace privado</div>
+              <input readonly value="{{ $accesoLink }}" onclick="this.select()" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-xs bg-slate-50">
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="{{ route('configuracion.acceso.cartel') }}" target="_blank"
+                 class="text-sm bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded-lg">🖨 Cartel para imprimir (PDF)</a>
+              <form method="POST" action="{{ route('configuracion.acceso.regenerar') }}"
+                    onsubmit="return confirm('¿Cambiar el enlace? El QR impreso actual dejará de funcionar.');">
+                @csrf
+                <button class="text-sm border border-red-300 text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg">Cambiar enlace</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
       @elseif ($seccion === 'colores')
         <h3 class="text-lg font-semibold text-slate-900">Colores personalizados</h3>
         <p class="text-sm text-slate-500 mb-4">

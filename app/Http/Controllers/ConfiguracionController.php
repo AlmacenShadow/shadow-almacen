@@ -20,7 +20,7 @@ use Illuminate\View\View;
  */
 class ConfiguracionController extends Controller
 {
-    private const SECCIONES = ['tipo_pintura', 'acabado', 'textura_tipo', 'origen', 'proveedor', 'ubicacion', 'colores', 'parametros'];
+    private const SECCIONES = ['tipo_pintura', 'acabado', 'textura_tipo', 'origen', 'proveedor', 'ubicacion', 'colores', 'parametros', 'acceso'];
 
     private function autorizar(): void
     {
@@ -39,6 +39,10 @@ class ConfiguracionController extends Controller
         if (isset(CatalogoOpcion::GRUPOS[$seccion])) {
             $datos['opciones'] = CatalogoOpcion::where('grupo', $seccion)->orderBy('orden')->orderBy('nombre')->get()
                 ->each(fn ($o) => $o->num_usos = $o->usos());
+        } elseif ($seccion === 'acceso') {
+            $link = route('consulta.movil', \App\Http\Controllers\ConsultaController::token());
+            $datos['accesoLink'] = $link;
+            $datos['accesoQr'] = 'data:image/png;base64,' . (new \Milon\Barcode\DNS2D())->getBarcodePNG($link, 'QRCODE,M', 8, 8, [0, 0, 0]);
         } elseif ($seccion === 'colores') {
             $datos['colores'] = DB::table('ral_catalogo')->where('personalizado', true)->orderBy('codigo')->get()
                 ->each(fn ($c) => $c->num_usos = Producto::where('ral', $c->codigo)->count());
@@ -172,6 +176,26 @@ class ConfiguracionController extends Controller
         if ($ok)    $r->with('flash', $ok);
         if ($error) $r->withErrors(['config' => $error]);
         return $r;
+    }
+
+    // ---------- Acceso móvil ----------
+
+    /** Cambia la clave del enlace privado: el enlace viejo (y su QR impreso) deja de funcionar. */
+    public function accesoRegenerar(): RedirectResponse
+    {
+        $this->autorizar();
+        \App\Http\Controllers\ConsultaController::regenerarToken();
+        return $this->volver('acceso', 'Enlace cambiado. Imprime el QR nuevo y retira el anterior.');
+    }
+
+    /** Cartel imprimible con el QR del enlace privado. */
+    public function accesoCartel()
+    {
+        $this->autorizar();
+        $link = route('consulta.movil', \App\Http\Controllers\ConsultaController::token());
+        $qr = 'data:image/png;base64,' . (new \Milon\Barcode\DNS2D())->getBarcodePNG($link, 'QRCODE,M', 12, 12, [0, 0, 0]);
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('configuracion.acceso_pdf', compact('qr'))
+            ->setPaper('letter', 'portrait')->stream('cartel-buscador.pdf');
     }
 
     // ---------- Carteles de ubicación ----------
