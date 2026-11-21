@@ -1,10 +1,6 @@
 @extends('consulta._movil_base')
 @section('title', 'Buscar lotes')
 
-@push('head')
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-@endpush
-
 @section('header-derecha')
   <form method="POST" action="{{ route('consulta.salir', $token) }}" class="flex items-center gap-2 text-xs text-slate-300">
     @csrf
@@ -14,10 +10,19 @@
 @endsection
 
 @section('content')
-  {{-- Dos acciones grandes: escanear una caja o buscar --}}
+  @include('consulta._lector')
+
+  {{-- Dos acciones grandes: escanear una caja (foto o en vivo) o buscar --}}
   <div class="grid grid-cols-2 gap-3 mb-3">
-    <button type="button" id="btn-escanear" class="bg-amber-500 text-white rounded-2xl py-5 font-bold text-lg shadow">📷 Escanear caja</button>
+    <label class="bg-amber-500 text-white rounded-2xl py-5 font-bold text-lg shadow flex items-center justify-center gap-2 cursor-pointer">
+      📸 Foto de caja
+      <input type="file" id="foto-caja" accept="image/*" capture="environment" class="hidden">
+    </label>
     <button type="button" id="btn-buscar" class="bg-white border border-slate-300 rounded-2xl py-5 font-bold text-lg text-slate-800 shadow-sm">🔎 Buscar</button>
+  </div>
+  <div class="flex items-center justify-between mb-3 px-1">
+    <p id="estado-caja" class="text-sm text-slate-600" hidden></p>
+    <button type="button" id="btn-vivo" class="ml-auto text-sm text-slate-600 underline">📷 escanear en vivo</button>
   </div>
 
   <div id="panel-escaner" hidden class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 mb-3">
@@ -30,24 +35,34 @@
 
   <script>
     (function () {
-      let lector = null;
+      const FORMATOS = ['qr_code', 'code_128'];
+      const estado = document.getElementById('estado-caja');
       const panel = document.getElementById('panel-escaner');
-      async function parar() { try { if (lector) await lector.stop(); } catch (e) {} lector = null; panel.hidden = true; }
+      let vivo = null;
+      const aviso = (t) => { estado.hidden = !t; estado.textContent = t || ''; };
 
-      document.getElementById('btn-escanear').addEventListener('click', async () => {
+      function abrirCodigo(texto) {
+        const codigo = String(texto).trim().toUpperCase().replace(/'/g, '-');
+        if (!codigo.startsWith('LOT-')) { aviso('Ese código no es la etiqueta de una caja (' + codigo + ').'); return; }
+        aviso('');
+        window.ConsultaLotes.abrirFicha(codigo);
+      }
+      async function parar() { if (vivo) await vivo.parar(); vivo = null; panel.hidden = true; }
+
+      document.getElementById('foto-caja').addEventListener('change', async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        aviso('Leyendo la foto…');
+        const texto = await LectorCodigos.desdeFoto(f, FORMATOS).catch(() => null);
+        e.target.value = '';
+        if (texto) abrirCodigo(texto);
+        else aviso('No pude leer la etiqueta. Prueba más cerca y con buena luz.');
+      });
+
+      document.getElementById('btn-vivo').addEventListener('click', async () => {
         panel.hidden = false;
-        lector = new Html5Qrcode('lector', { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE] });
-        try {
-          await lector.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, async (texto) => {
-            const codigo = String(texto).trim().toUpperCase().replace(/'/g, '-');
-            await parar();
-            if (!codigo.startsWith('LOT-')) { alert('Ese código no es la etiqueta de una caja (' + codigo + ').'); return; }
-            window.ConsultaLotes.abrirFicha(codigo);
-          });
-        } catch (e) {
-          panel.hidden = true;
-          alert('No se pudo abrir la cámara. Revisa el permiso de cámara del navegador.');
-        }
+        try { vivo = await LectorCodigos.enVivo('lector', FORMATOS, (t) => { panel.hidden = true; vivo = null; abrirCodigo(t); }); }
+        catch (e) { panel.hidden = true; aviso('No se pudo abrir la cámara en vivo. Usa "Foto de caja".'); }
       });
       document.getElementById('btn-parar').addEventListener('click', parar);
       document.getElementById('btn-buscar').addEventListener('click', () => {
