@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/configuracion/colores',                   [ConfiguracionController::class, 'colorStore'])->name('configuracion.colores.store');
     Route::patch('/configuracion/colores/{codigo}',         [ConfiguracionController::class, 'colorUpdate'])->name('configuracion.colores.update');
     Route::delete('/configuracion/colores/{codigo}',        [ConfiguracionController::class, 'colorDestroy'])->name('configuracion.colores.destroy');
+    Route::get('/configuracion/ubicaciones/carteles.pdf',   [ConfiguracionController::class, 'cartelesUbicacion'])->name('configuracion.ubicaciones.carteles');
     Route::patch('/configuracion/parametros',               [ConfiguracionController::class, 'parametrosUpdate'])->name('configuracion.parametros.update');
 
     Route::get('/catalogo-ral',              [RalCatalogoController::class, 'index'])->name('catalogo-ral.index');

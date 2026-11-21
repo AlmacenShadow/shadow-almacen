@@ -174,6 +174,29 @@ class ConfiguracionController extends Controller
         return $r;
     }
 
+    // ---------- Carteles de ubicación ----------
+
+    /** PDF con un cartel por ubicación activa: nombre grande + QR "UBI-<NOMBRE>" (2 por hoja carta). */
+    public function cartelesUbicacion()
+    {
+        $this->autorizar();
+        $carteles = CatalogoOpcion::where('grupo', 'ubicacion')->where('activo', true)->orderBy('orden')->get()
+            ->map(function ($o) {
+                $codigo = 'UBI-' . mb_strtoupper($o->nombre);
+                $png = (new \Milon\Barcode\DNS2D())->getBarcodePNG($codigo, 'QRCODE,H', 14, 14, [0, 0, 0]);
+                if (preg_match('/^(\d+)\s*([A-Za-z])$/', $o->nombre, $m)) {
+                    $sub = 'Estante ' . $m[1] . ' · cara ' . strtoupper($m[2]) . (strtoupper($m[2]) === 'A' ? ' (derecha)' : (strtoupper($m[2]) === 'B' ? ' (izquierda)' : ''));
+                } else {
+                    $sub = 'Ubicación';
+                }
+                return ['nombre' => $o->nombre, 'codigo' => $codigo, 'sub' => $sub, 'qr' => 'data:image/png;base64,' . $png];
+            });
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('configuracion.carteles_pdf', ['carteles' => $carteles])
+            ->setPaper('letter', 'portrait')
+            ->stream('carteles-ubicaciones.pdf');
+    }
+
     // ---------- Colores personalizados ----------
 
     public function colorStore(Request $request): RedirectResponse

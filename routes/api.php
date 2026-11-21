@@ -10,3 +10,4 @@ Route::get('snapshot',           [TabletController::class, 'snapshot']);
 Route::get('usuarios/{codigo}',  [TabletController::class, 'mostrarUsuario']);
 Route::get('lotes/{codigo}',     [TabletController::class, 'mostrarLote']);
 Route::post('movimientos',       [TabletController::class, 'registrarMovimiento']);
+Route::post('lotes/{codigo}/ubicacion', [TabletController::class, 'ubicarLote']);

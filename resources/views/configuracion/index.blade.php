@@ -38,7 +38,13 @@
 
       {{-- ================= Catálogos ================= --}}
       @if ($g)
-        <h3 class="text-lg font-semibold text-slate-900">{{ $g['titulo'] }}</h3>
+        <div class="flex items-start justify-between gap-4">
+          <h3 class="text-lg font-semibold text-slate-900">{{ $g['titulo'] }}</h3>
+          @if ($seccion === 'ubicacion')
+            <a href="{{ route('configuracion.ubicaciones.carteles') }}" target="_blank"
+               class="text-sm bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg whitespace-nowrap">🖨 Carteles con QR (PDF)</a>
+          @endif
+        </div>
         <p class="text-sm text-slate-500 mb-4">{{ $g['ayuda'] }}
           @if (!in_array($seccion, ['proveedor', 'ubicacion'], true)) Si una opción ya la usan productos, no se puede borrar: desactívala y dejará de aparecer en los formularios. @endif
         </p>

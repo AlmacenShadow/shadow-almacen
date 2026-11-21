@@ -78,6 +78,7 @@ class TabletController extends Controller
                 'lotes.peso_tara_unitario_kg',
                 'lotes.propietario_externo',
                 'lotes.propietario_nombre',
+                'lotes.ubicacion',
                 DB::raw('lotes.notas as lote_notas'),
                 'productos.ral',
                 DB::raw('texturas.nombre as textura'),
@@ -99,6 +100,7 @@ class TabletController extends Controller
                 $l->caja_abierta_kg       = $e['caja_abierta'];
                 $l->cajas_fuera           = $e['fuera'];
                 $l->vigilante_desactivado = $e['desactivado'];
+                $l->ubicacion_nombre      = $l->ubicacion ? Catalogo::nombre('ubicacion', $l->ubicacion) : null;
                 return self::enriquecer($l);
             });
 
@@ -109,6 +111,8 @@ class TabletController extends Controller
             'lotes'     => $lotes,
             // clave de origen => data URI de la bandera (para países nuevos sin actualizar la app)
             'banderas'  => Catalogo::banderas(),
+            // clave => nombre de las ubicaciones activas (el cartel del estante lleva "UBI-<NOMBRE>")
+            'ubicaciones' => Catalogo::opciones('ubicacion', true),
         ]);
     }
 
@@ -202,6 +206,44 @@ class TabletController extends Controller
                 'fecha_vencimiento' => $loteAnterior->fecha_vencimiento,
                 'stock_kg'        => (float) $loteAnterior->stock_kg,
             ] : null,
+        ]);
+    }
+
+    /**
+     * POST /api/lotes/{codigo}/ubicacion — modo Ubicar de la tablet.
+     * Solo encargado/admin activo. Requiere conexión (no pasa por la cola).
+     */
+    public function ubicarLote(Request $request, string $codigo): JsonResponse
+    {
+        $datos = $request->validate([
+            'usuario_codigo' => ['required', 'string'],
+            'ubicacion'      => ['required', 'string', \Illuminate\Validation\Rule::in(array_keys(Catalogo::opciones('ubicacion', true)))],
+        ]);
+        $usuario = Usuario::where('codigo_barcode', $datos['usuario_codigo'])->where('activo', true)
+            ->whereIn('rol', ['encargado', 'admin'])->first();
+        if (! $usuario) {
+            return response()->json(['error' => 'Solo un encargado o administrador puede ubicar lotes.'], 403);
+        }
+        $lote = Lote::where('codigo_barcode', $codigo)->first();
+        if (! $lote) {
+            return response()->json(['error' => 'Lote no encontrado'], 404);
+        }
+
+        $antes = $lote->ubicacion;
+        if ($antes !== $datos['ubicacion']) {
+            $lote->ubicacion = $datos['ubicacion'];
+            $lote->save();
+            DB::table('lote_ubicaciones')->insert([
+                'lote_id' => $lote->id, 'desde' => $antes, 'hasta' => $datos['ubicacion'],
+                'usuario_id' => $usuario->id, 'nota' => 'Tablet (modo Ubicar)', 'created_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'ok'          => true,
+            'cambio'      => $antes !== $datos['ubicacion'],
+            'desde'       => $antes ? Catalogo::nombre('ubicacion', $antes) : null,
+            'hasta'       => Catalogo::nombre('ubicacion', $datos['ubicacion']),
         ]);
     }
 
