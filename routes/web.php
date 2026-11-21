@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/lotes/{lote}/editar',    [LoteController::class, 'edit'])->name('lotes.edit');
     Route::patch('/lotes/{lote}',         [LoteController::class, 'update'])->name('lotes.update');
     Route::delete('/lotes/{lote}',        [LoteController::class, 'destroy'])->name('lotes.destroy');
+    Route::post('/lotes/{lote}/cerrar-caja', [LoteController::class, 'cerrarCaja'])->name('lotes.cerrar-caja');
 
     Route::get('/movimientos',                            [MovimientoController::class, 'index'])->name('movimientos.index');
     Route::get('/movimientos/{movimiento}/corregir',      [MovimientoController::class, 'corregirForm'])->name('movimientos.corregir');

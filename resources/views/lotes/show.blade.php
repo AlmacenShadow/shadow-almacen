@@ -83,6 +83,34 @@
         <dt class="text-slate-500">Recepcionado por</dt>
         <dd>{{ $lote->recepcionadoPor->nombre }}</dd>
       </dl>
+      @if (count($cajas['fuera']) || $cajas['caja_abierta'] !== null)
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">Cajas</div>
+          @if ($errors->has('cajas'))
+            <p class="text-sm text-red-700 mb-2">{{ $errors->first('cajas') }}</p>
+          @endif
+          @if ($cajas['caja_abierta'] !== null && count($cajas['fuera']) === 0 && ! $cajas['desactivado'])
+            <p class="text-sm text-sky-800 mb-2">📦 Caja abierta en el estante: ~@kg($cajas['caja_abierta']) kg</p>
+          @endif
+          @if ($cajas['desactivado'])
+            <p class="text-xs text-slate-500 mb-2">Hay dos cajas fuera a la vez: el seguimiento de caja abierta está en pausa hasta que vuelvan.</p>
+          @endif
+          <ul class="space-y-2">
+            @foreach ($cajas['fuera'] as $f)
+              <li class="flex flex-wrap items-center gap-3 text-sm bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <span>📤 Fuera: <b>{{ $f['usuario_nombre'] }}</b> · ~@kg($f['peso_kg']) kg · desde @fechaHora($f['at'])</span>
+                <form method="POST" action="{{ route('lotes.cerrar-caja', $lote) }}" class="ml-auto"
+                      onsubmit="return confirm('¿Cerrar la caja de {{ $f['usuario_nombre'] }}? Se registrará un retorno de 0 kg (la caja se terminó).');">
+                  @csrf
+                  <input type="hidden" name="usuario_codigo" value="{{ $f['usuario_codigo'] }}">
+                  <button class="text-xs bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-semibold px-2.5 py-1 rounded">Cerrar: se terminó</button>
+                </form>
+              </li>
+            @endforeach
+          </ul>
+        </div>
+      @endif
+
       @if ($ubicaciones->isNotEmpty())
         <div class="mt-5 pt-4 border-t border-slate-100">
           <div class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">Historial de ubicación</div>

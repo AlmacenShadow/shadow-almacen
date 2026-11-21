@@ -82,6 +82,39 @@ class LoteController extends Controller
         'propietario_nombre.required_if_accepted' => 'Si el lote es de un propietario externo, escribe su nombre.',
     ];
 
+    /**
+     * Cierra una caja que quedó "afuera" y nadie devolvió (p. ej. la última del lote, que se tiró
+     * con sus etiquetas). Registra un retorno de 0 kg a nombre de quien la sacó, con la anomalía
+     * caja_no_cerrada y una nota con quién la cerró desde el panel.
+     */
+    public function cerrarCaja(Request $request, Lote $lote): RedirectResponse
+    {
+        $this->autorizar();
+        $codigo = (string) $request->input('usuario_codigo');
+        $e = \App\Support\Cajas::estadoDeLote($lote->id);
+        $caja = collect($e['fuera'])->firstWhere('usuario_codigo', $codigo);
+        if (! $caja) {
+            return back()->withErrors(['cajas' => 'Esa caja ya no figura como fuera (puede que ya se haya cerrado).']);
+        }
+        $duenio = \App\Models\Usuario::where('codigo_barcode', $codigo)->firstOrFail();
+
+        \App\Models\Movimiento::create([
+            'lote_id'       => $lote->id,
+            'usuario_id'    => $duenio->id,
+            'tipo'          => 'retorno',
+            'peso_kg'       => 0,
+            'peso_manual'   => true,
+            'anomalia'      => true,
+            'tipo_anomalia' => 'caja_no_cerrada',
+            'nota_texto'    => 'Cerrada desde el panel por ' . Auth::user()->nombre . ': la caja se terminó y no se devolvió en la tablet.',
+            'sync_uuid'     => (string) \Illuminate\Support\Str::uuid(),
+            'device_id'     => 'panel-web',
+        ]);
+
+        return redirect()->route('lotes.show', $lote)
+            ->with('flash', "Caja de {$duenio->nombre} cerrada (retorno de 0 kg).");
+    }
+
     /** Deja constancia de un cambio de ubicación (de dónde, a dónde, quién). */
     public static function registrarUbicacion(int $loteId, ?string $desde, ?string $hasta, ?string $nota = null): void
     {
@@ -175,6 +208,7 @@ class LoteController extends Controller
             ->select('h.*', 'u.nombre as usuario_nombre')->get();
 
         return view('lotes.show', [
+            'cajas'       => \App\Support\Cajas::estadoDeLote($lote->id),
             'ubicaciones' => $ubicaciones,
             'lote'        => $lote,
             'movimientos' => $movimientos,
