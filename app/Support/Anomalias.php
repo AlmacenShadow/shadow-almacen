@@ -17,13 +17,14 @@ class Anomalias
         'caja_no_cerrada'        => 'La caja no se devolvió al terminarla (se informó después)',
         'retorno_sin_salida'     => 'Retorno sin salida previa del mismo pintor',
         'retorno_excede_salida'  => 'Devolvió más peso del que sacó',
+        'codigo_manual'          => 'El código de la caja se escribió a mano (no se escaneó)',
     ];
 
     /** Las que la tablet puede informar. */
-    public const DE_TABLET = ['fifo_override', 'lote_ajeno', 'lote_vencido', 'caja_nueva_con_abierta', 'caja_no_cerrada'];
+    public const DE_TABLET = ['fifo_override', 'lote_ajeno', 'lote_vencido', 'caja_nueva_con_abierta', 'caja_no_cerrada', 'codigo_manual'];
 
     /** Las que exigen autorización de un superior. */
-    public const REQUIEREN_AUTORIZACION = ['fifo_override', 'lote_ajeno', 'caja_nueva_con_abierta'];
+    public const REQUIEREN_AUTORIZACION = ['fifo_override', 'lote_ajeno', 'caja_nueva_con_abierta', 'codigo_manual'];
 
     public static function lista(?string $csv): array
     {
